@@ -16,8 +16,13 @@ public class Vector2Int(int p_x = 0, int p_y = 0)
     public static Vector2Int operator /(Vector2Int og, int value) =>
         new(og.X / value, og.Y / value);
 
-    public Vector3 ToVector3()
+    public Vector2 ToVector2()
     {
-        return new(this.X, this.Y, 0);
+        return new(this.X, this.Y);
+    }
+
+    public nkast.Aether.Physics2D.Common.Vector2 ToAetherVector2()
+    {
+        return new(this.X, this.Y);
     }
 }
