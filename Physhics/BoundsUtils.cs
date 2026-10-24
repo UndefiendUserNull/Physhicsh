@@ -1,11 +1,16 @@
-﻿namespace Physhicsh
+﻿using System.Numerics;
+
+namespace Physhicsh
 {
     public static class BoundsUtils
     {
-        public static Vector2Int CenterPositionPivot(int x, int y, int w, int h)
+        public static Vector2 CenterPositionPivot(float x, float y, float w, float h)
         {
-            int center = Math.Abs(w - h) / 2;
-            return new Vector2Int(x - center, y - center);
+            return new Vector2(x - (w / 2), y - (h / 2));
+        }
+        public static Vector2 CenterPositionPivot(Vector2 pos, Vector2 size)
+        {
+            return CenterPositionPivot(pos.X, pos.Y, size.X, size.Y);
         }
     }
 }

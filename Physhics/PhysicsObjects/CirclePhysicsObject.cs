@@ -15,9 +15,20 @@ public class CirclePhysicsObject(float x, float y, int radius, Color color, floa
         fFixture.Friction = 0.5f;
     }
 
+    public override void PhysicsUpdate()
+    {
+        base.PhysicsUpdate();
+        if (Raylib.IsMouseButtonDown(0))
+            Body.Position = new(Body.Position.X + .5f, Body.Position.Y);
+
+        if (Raylib.IsMouseButtonDown(MouseButton.Right))
+            Body.Position = new(Body.Position.X - .5f, Body.Position.Y);
+
+    }
+
     public override void Draw()
     {
         base.Draw();
-        Raylib.DrawCircleV(Position.ToNumericsVector2(), Radius, Color);
+        Raylib.DrawCircleV(Body.Position.ToNumericsVector2(), Radius, Color);
     }
 }
