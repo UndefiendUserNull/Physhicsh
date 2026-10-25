@@ -13,7 +13,8 @@ public class MainWindow
 {
     private const int SCREEN_WIDTH = 1280;
     private const int SCREEN_HEIGHT = 640;
-    private const float PPM = 64f;
+    private const int MAX_FPS = 60;
+    private const float PPM = 16f;
     private const float FIXED_DT = 1f / 60f;
 
     private readonly List<PhysicsObject> _physicsObjects = [];
@@ -29,11 +30,12 @@ public class MainWindow
     private static Vector2 ScreenCenter => new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
     private string _imGuiFontPath = "fonts/arial.ttf";
     private ImFontPtr _imGuiFont;
+    private Vector2 _contextMenuWorldPos;
 
     public void Start()
     {
         Raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Physhicsh");
-        Raylib.SetTargetFPS(120);
+        Raylib.SetTargetFPS(MAX_FPS);
 
         // Load font
         rlImGui.SetupUserFonts += (ImGuiIOPtr io) =>
@@ -83,8 +85,8 @@ public class MainWindow
 
     private void HandleSpawnShortcuts()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.R)) SpawnRectangle();
-        if (Raylib.IsKeyPressed(KeyboardKey.C)) SpawnCircle();
+        if (Raylib.IsKeyPressed(KeyboardKey.R)) SpawnRectangle(_mousePosWorld);
+        if (Raylib.IsKeyPressed(KeyboardKey.C)) SpawnCircle(_mousePosWorld);
     }
 
     private void GraphicsUpdate()
@@ -110,11 +112,15 @@ public class MainWindow
     {
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
         {
+            _contextMenuWorldPos = ScreenToWorld(Raylib.GetMousePosition().ToAetherVector2());
+
             ImGui.SetNextWindowPos(Raylib.GetMousePosition());
             ImGui.OpenPopup("##world_context");
         }
+
         if (ImGui.BeginPopup("##world_context"))
         {
+
             ImGui.PushFont(_imGuiFont);
             if (ImGui.MenuItem("Inspect"))
             {
@@ -125,13 +131,13 @@ public class MainWindow
             {
                 if (ImGui.MenuItem("Rectangle", "r"))
                 {
-                    SpawnRectangle();
+                    SpawnRectangle(_contextMenuWorldPos);
 
                 }
 
                 if (ImGui.MenuItem("Circle", "c"))
                 {
-                    SpawnCircle();
+                    SpawnCircle(_contextMenuWorldPos);
                 }
 
                 ImGui.EndMenu();
@@ -181,20 +187,20 @@ public class MainWindow
         }
     }
 
-    private void SpawnRectangle()
+    private void SpawnRectangle(Vector2 pos)
     {
         RectanglePhysicsObject newRect = new(
-            _mousePosWorld.X, _mousePosWorld.Y, 1, 1,
+            pos.X, pos.Y, 1, 1,
             RandomColor(), 1, isStatic: false);
 
         _physicsObjects.Add(newRect);
         newRect.Start(_world);
     }
 
-    private void SpawnCircle()
+    private void SpawnCircle(Vector2 pos)
     {
         CirclePhysicsObject newBall = new(
-            _mousePosWorld.X, _mousePosWorld.Y, _rng.NextFloat(0.2f, 0.5f),
+            pos.X, pos.Y, _rng.NextFloat(0.2f, 0.5f),
             RandomColor(), 1, isStatic: false);
 
         _physicsObjects.Add(newBall);
