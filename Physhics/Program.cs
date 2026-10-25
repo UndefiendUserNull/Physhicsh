@@ -1,11 +1,11 @@
 ﻿namespace Physhicsh;
 
-public class Program
+public static class Program
 {
-    static void Main(string[] args)
+    public static void Main(string[] args)
     {
-        MainWindow mainWindow = new();
-
-        mainWindow.Start();
+        MainWindow window = new();
+        window.Start();
     }
+
 }

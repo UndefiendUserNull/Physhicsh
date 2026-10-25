@@ -3,32 +3,27 @@ using Raylib_cs;
 
 namespace Physhicsh.PhysicsObjects;
 
-public class CirclePhysicsObject(float x, float y, int radius, Color color, float density = 1f, bool isStatic = false) : PhysicsObject(x, y, color, isStatic)
+public class CirclePhysicsObject(float x, float y, float radius, Color color, float density = 1f, bool isStatic = false) : PhysicsObject(x, y, color, isStatic)
 {
-    public int Radius = radius;
+    public float Radius = radius;
     public override void Start(World world)
     {
         base.Start(world);
 
-        Fixture fFixture = Body.CreateCircle(radius, density);
-        fFixture.Restitution = 0.3f;
-        fFixture.Friction = 0.5f;
+        Fixture = Body.CreateCircle(Radius, density);
+        Fixture.Restitution = 0.3f;
+        Fixture.Friction = 0.5f;
     }
 
-    public override void PhysicsUpdate()
+    public override void PhysicsUpdate(World world)
     {
-        base.PhysicsUpdate();
-        if (Raylib.IsMouseButtonDown(0))
-            Body.Position = new(Body.Position.X + .5f, Body.Position.Y);
-
-        if (Raylib.IsMouseButtonDown(MouseButton.Right))
-            Body.Position = new(Body.Position.X - .5f, Body.Position.Y);
+        base.PhysicsUpdate(world);
 
     }
 
     public override void Draw()
     {
         base.Draw();
-        Raylib.DrawCircleV(Body.Position.ToNumericsVector2(), Radius, Color);
+        Raylib.DrawCircleV(VectorUtils.M2Px(Body.Position), Radius, Color);
     }
 }

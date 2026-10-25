@@ -1,9 +1,10 @@
-﻿using System.Numerics;
+﻿using nkast.Aether.Physics2D.Common;
 
 namespace Physhicsh;
 
 public static class NumericsVectorExtension
 {
     public static Vector2Int ToVector2Int(this Vector2 v) => new((int)v.X, (int)v.Y);
-    public static nkast.Aether.Physics2D.Common.Vector2 ToAetherVector2(this Vector2 v) => new(v.X, v.Y);
+    public static Vector2 ToAetherVector2(this System.Numerics.Vector2 v) => new(v.X, v.Y);
+
 }
