@@ -12,11 +12,6 @@ namespace Physhicsh;
 
 public class MainWindow
 {
-    private const int SCREEN_WIDTH = 1280;
-    private const int SCREEN_HEIGHT = 640;
-    private const int MAX_FPS = 60;
-    private const float FIXED_DT = 1f / 60f;
-
     private readonly List<PhysicsObject> _physicsObjects = [];
     private readonly Random _rng = new();
 
@@ -26,8 +21,6 @@ public class MainWindow
     private FixedMouseJoint? _mouseJoint;
     private PhysicsObject _heldObject = null!;
     private Vector2 _mousePosWorld;
-
-    private static Vector2 ScreenCenter => new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
     private readonly string _imGuiFontPath = "fonts/arial.ttf";
     private ImFontPtr _imGuiFont;
     private Vector2 _contextMenuWorldPos;
@@ -38,8 +31,8 @@ public class MainWindow
 
     public void Start()
     {
-        Raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Physhicsh");
-        Raylib.SetTargetFPS(MAX_FPS);
+        Raylib.InitWindow(Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT, "Physhicsh");
+        Raylib.SetTargetFPS(Consts.MAX_FPS);
 
         // Load font
         rlImGui.SetupUserFonts += io =>
@@ -81,7 +74,7 @@ public class MainWindow
 
     private void Update()
     {
-        _mousePosWorld = ScreenToWorld(Raylib.GetMousePosition().ToAetherVector2());
+        _mousePosWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
 
         StepPhysics(Raylib.GetFrameTime());
         DebugScaling();
@@ -169,7 +162,7 @@ public class MainWindow
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
         {
             _contextMenuOpen = true;
-            _contextMenuWorldPos = ScreenToWorld(Raylib.GetMousePosition().ToAetherVector2());
+            _contextMenuWorldPos = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
 
             ImGui.SetNextWindowPos(Raylib.GetMousePosition());
             ImGui.OpenPopup("##world_context");
@@ -235,10 +228,10 @@ public class MainWindow
     private void StepPhysics(float frameTime)
     {
         _accumulator += frameTime;
-        while (_accumulator >= FIXED_DT)
+        while (_accumulator >= Consts.FIXED_DT)
         {
-            _world.Step(FIXED_DT);
-            _accumulator -= FIXED_DT;
+            _world.Step(Consts.FIXED_DT);
+            _accumulator -= Consts.FIXED_DT;
         }
     }
 
@@ -256,12 +249,6 @@ public class MainWindow
                 circle.Radius += 0.01f;
             if (Raylib.IsKeyDown(KeyboardKey.J))
                 circle.Radius -= 0.01f;
-        }
-        else if ((_heldObject is RectanglePhysicsObject rect) && Raylib.IsKeyDown(KeyboardKey.G))
-        {
-            Raylib.DrawText(rect.Fixture.Shape.Radius.ToString(), 10, 140, 30, Color.Magenta);
-
-            rect.Fixture.Shape.Radius += 0.01f;
         }
     }
 
@@ -305,7 +292,7 @@ public class MainWindow
 
     private void BeginDrag()
     {
-        Vector2 mouseWorld = ScreenToWorld(Raylib.GetMousePosition().ToAetherVector2());
+        Vector2 mouseWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
         Fixture fixture = _world.TestPoint(mouseWorld);
 
         if (fixture == null || fixture.Body.BodyType != BodyType.Dynamic)
@@ -322,7 +309,7 @@ public class MainWindow
 
     private void UpdateDrag()
     {
-        _mouseJoint!.WorldAnchorB = ScreenToWorld(Raylib.GetMousePosition().ToAetherVector2());
+        _mouseJoint!.WorldAnchorB = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
     }
 
     private void EndDrag()
@@ -342,62 +329,15 @@ public class MainWindow
     private void DrawPhysicsObjects()
     {
         foreach (PhysicsObject item in _physicsObjects)
-            DrawBody(item);
-    }
-
-    private void DrawBody(PhysicsObject obj)
-    {
-        switch (obj.Fixture.Shape)
-        {
-            case CircleShape circle:
-                DrawCircleShape(obj, circle);
-                break;
-            case PolygonShape polygon:
-                DrawPolygonShape(obj, polygon);
-                break;
-        }
-    }
-
-    private void DrawCircleShape(PhysicsObject obj, CircleShape circle)
-    {
-
+            item.Draw();
     }
 
     private void DrawPolygonShape(PhysicsObject obj, PolygonShape polygon)
     {
-        (float widthPixels, float heightPixels) = MeasurePolygon(polygon);
 
-        Vector2 screenPos = WorldToScreen(obj.Body.Position);
-
-        float radiusFactor = obj.Fixture.Shape.Radius * Consts.PPM;
-        Rectangle rec = new(screenPos.X + radiusFactor, screenPos.Y + radiusFactor, widthPixels + radiusFactor, heightPixels + radiusFactor);
-        Vector2 origin = new(widthPixels / 2f, heightPixels / 2f);
-        float rotationDegrees = -obj.Body.Rotation * (180f / MathF.PI);
-
-        Raylib.DrawRectanglePro(rec, origin.ToNumericsVector2(), rotationDegrees, obj.Color);
     }
 
-    private (float width, float height) MeasurePolygon(PolygonShape polygon)
-    {
-        float minX = float.MaxValue, maxX = float.MinValue;
-        float minY = float.MaxValue, maxY = float.MinValue;
 
-        foreach (Vector2 v in polygon.Vertices)
-        {
-            minX = MathF.Min(minX, v.X);
-            maxX = MathF.Max(maxX, v.X);
-            minY = MathF.Min(minY, v.Y);
-            maxY = MathF.Max(maxY, v.Y);
-        }
 
-        return ((maxX - minX) * Consts.PPM, (maxY - minY) * Consts.PPM);
-    }
 
-    private Vector2 WorldToScreen(Vector2 world) => new(
-        ScreenCenter.X + world.X * Consts.PPM,
-        ScreenCenter.Y - world.Y * Consts.PPM);
-
-    private Vector2 ScreenToWorld(Vector2 screen) => new(
-        (screen.X - ScreenCenter.X) / Consts.PPM,
-        (ScreenCenter.Y - screen.Y) / Consts.PPM);
 }

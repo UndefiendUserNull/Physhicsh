@@ -1,5 +1,4 @@
-﻿using nkast.Aether.Physics2D.Common;
-using nkast.Aether.Physics2D.Dynamics;
+﻿using nkast.Aether.Physics2D.Dynamics;
 using Physhicsh.Extensions;
 using Raylib_cs;
 
@@ -29,18 +28,8 @@ public class CirclePhysicsObject(float x, float y, float radius, Color color, fl
     public override void Draw()
     {
         base.Draw();
+        float screenRadius = Radius * Consts.PPM;
 
-        float cos = MathF.Cos(Body.Rotation);
-        float sin = MathF.Sin(Body.Rotation);
-        Vector2 local = Body.Position;
-
-        Vector2 world = new(
-            Body.Position.X + cos * local.X - sin * local.Y,
-            Body.Position.Y + sin * local.X + cos * local.Y);
-
-        Vector2 screenPos = WorldToScreen(world);
-        float screenRadius = circle.Radius * PPM;
-
-        Raylib.DrawCircleV(screenPos.ToNumericsVector2(), screenRadius, obj.Color);
+        Raylib.DrawCircleV(Body.Position.WorldToScreen().ToNumericsVector2(), screenRadius, Color);
     }
 }
