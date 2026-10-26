@@ -14,7 +14,7 @@ public class MainWindow
     private const int SCREEN_WIDTH = 1280;
     private const int SCREEN_HEIGHT = 640;
     private const int MAX_FPS = 60;
-    private const float PPM = 16f;
+    private float PPM = 32f;
     private const float FIXED_DT = 1f / 60f;
 
     private readonly List<PhysicsObject> _physicsObjects = [];
@@ -28,9 +28,12 @@ public class MainWindow
     private Vector2 _mousePosWorld;
 
     private static Vector2 ScreenCenter => new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-    private string _imGuiFontPath = "fonts/arial.ttf";
+    private readonly string _imGuiFontPath = "fonts/arial.ttf";
     private ImFontPtr _imGuiFont;
     private Vector2 _contextMenuWorldPos;
+    private bool _quickSpawnMenuPending = false;
+    private Vector2 _quickSpawnMenuMousePos;
+    private Vector2 _quickSpawnMenuScreenPos;
 
     public void Start()
     {
@@ -38,7 +41,7 @@ public class MainWindow
         Raylib.SetTargetFPS(MAX_FPS);
 
         // Load font
-        rlImGui.SetupUserFonts += (ImGuiIOPtr io) =>
+        rlImGui.SetupUserFonts += io =>
         {
             _imGuiFont = io.Fonts.AddFontFromFileTTF(
             _imGuiFontPath,
@@ -66,6 +69,9 @@ public class MainWindow
         _physicsObjects.Add(new RectanglePhysicsObject(0, 0, 1, 1, Color.DarkGray, 1, isStatic: false));
         _physicsObjects.Add(new RectanglePhysicsObject(5, 0, 1, 1, Color.DarkGray, 1, isStatic: false));
         _physicsObjects.Add(new RectanglePhysicsObject(0, -5, 10, 2, Color.SkyBlue, isStatic: true));
+        _physicsObjects.Add(new RectanglePhysicsObject(0, -10, 100, 2, Color.SkyBlue, isStatic: true));
+        _physicsObjects.Add(new RectanglePhysicsObject(20, -10, 1, 100, Color.SkyBlue, isStatic: true));
+        _physicsObjects.Add(new RectanglePhysicsObject(-20, -10, 1, 100, Color.SkyBlue, isStatic: true));
 
         foreach (PhysicsObject obj in _physicsObjects)
             obj.Start(_world);
@@ -79,14 +85,22 @@ public class MainWindow
         StepPhysics(Raylib.GetFrameTime());
         DebugScaling();
         HandleMouseInput();
-        HandleSpawnShortcuts();
+        HandleShortcuts();
         UpdatePhysicsObjects();
     }
 
-    private void HandleSpawnShortcuts()
+    private void HandleShortcuts()
     {
         if (Raylib.IsKeyPressed(KeyboardKey.R)) SpawnRectangle(_mousePosWorld);
         if (Raylib.IsKeyPressed(KeyboardKey.C)) SpawnCircle(_mousePosWorld);
+        if (Raylib.IsKeyPressed(KeyboardKey.Q))
+        {
+            _quickSpawnMenuPending = true;
+            _quickSpawnMenuMousePos = _mousePosWorld;
+            _quickSpawnMenuScreenPos = Raylib.GetMousePosition().ToAetherVector2();
+        }
+        if (Raylib.IsKeyDown(KeyboardKey.Minus)) PPM -= 0.5F;
+        if (Raylib.IsKeyDown(KeyboardKey.Equal)) PPM += 0.5F;
     }
 
     private void GraphicsUpdate()
@@ -98,7 +112,31 @@ public class MainWindow
         ImGuiIOPtr io = ImGui.GetIO();
 
         StartImGui(io);
+
+        #region ImGui menus
+
         ImGuiContextMenu();
+        ImGuiQuickSpawnPopup();
+
+        #endregion
+
+        if (_quickSpawnMenuPending)
+        {
+            _quickSpawnMenuPending = false;
+            ImGui.SetNextWindowPos(_quickSpawnMenuMousePos.ToNumericsVector2());
+            ImGui.OpenPopup("##quick_spawn");
+
+            if (ImGui.BeginPopup("##quick_spawn"))
+            {
+                ImGui.PushFont(_imGuiFont);
+
+                DrawQuickSpawnMenu(_quickSpawnMenuMousePos);
+
+                ImGui.PopFont();
+                ImGui.EndPopup();
+            }
+
+        }
 
         DrawPhysicsObjects();
         DrawDebugText();
@@ -106,6 +144,25 @@ public class MainWindow
         ImGui.End();
         rlImGui.End();
         Raylib.EndDrawing();
+    }
+
+    private void ImGuiQuickSpawnPopup()
+    {
+        if (_quickSpawnMenuPending)
+        {
+            _quickSpawnMenuPending = false;
+            ImGui.SetNextWindowPos(_quickSpawnMenuScreenPos.ToNumericsVector2());
+            ImGui.OpenPopup("##quick_spawn");
+        }
+
+        // BeginPopup is called EVERY frame so the popup stays alive.
+        if (ImGui.BeginPopup("##quick_spawn"))
+        {
+            ImGui.PushFont(_imGuiFont);
+            DrawQuickSpawnMenu(_mousePosWorld);   // world pos for spawning
+            ImGui.PopFont();
+            ImGui.EndPopup();
+        }
     }
 
     private void ImGuiContextMenu()
@@ -120,31 +177,45 @@ public class MainWindow
 
         if (ImGui.BeginPopup("##world_context"))
         {
-
             ImGui.PushFont(_imGuiFont);
-            if (ImGui.MenuItem("Inspect"))
-            {
-                // Handle inspect.
-            }
 
-            if (ImGui.BeginMenu("Spawn"))
+            DrawQuickSpawnMenu(_contextMenuWorldPos);
+
+            if (_heldFixture is not null)
             {
-                if (ImGui.MenuItem("Rectangle", "r"))
+                if (ImGui.MenuItem("Delete"))
                 {
-                    SpawnRectangle(_contextMenuWorldPos);
 
                 }
 
-                if (ImGui.MenuItem("Circle", "c"))
+                if (ImGui.MenuItem("Properties"))
                 {
-                    SpawnCircle(_contextMenuWorldPos);
-                }
 
-                ImGui.EndMenu();
+                }
             }
+
 
             ImGui.PopFont();
             ImGui.EndPopup();
+        }
+    }
+
+    private void DrawQuickSpawnMenu(Vector2 spawnPos)
+    {
+        if (ImGui.BeginMenu("Quick Spawn"))
+        {
+            if (ImGui.MenuItem("Rectangle", "r"))
+            {
+                SpawnRectangle(spawnPos);
+
+            }
+
+            if (ImGui.MenuItem("Circle", "c"))
+            {
+                SpawnCircle(spawnPos);
+            }
+
+            ImGui.EndMenu();
         }
     }
 
@@ -264,7 +335,7 @@ public class MainWindow
             DrawBody(item);
     }
 
-    private static void DrawBody(PhysicsObject obj)
+    private void DrawBody(PhysicsObject obj)
     {
         switch (obj.Fixture.Shape)
         {
@@ -277,7 +348,7 @@ public class MainWindow
         }
     }
 
-    private static void DrawCircleShape(PhysicsObject obj, CircleShape circle)
+    private void DrawCircleShape(PhysicsObject obj, CircleShape circle)
     {
         float cos = MathF.Cos(obj.Body.Rotation);
         float sin = MathF.Sin(obj.Body.Rotation);
@@ -293,7 +364,7 @@ public class MainWindow
         Raylib.DrawCircleV(screenPos.ToNumericsVector2(), screenRadius, obj.Color);
     }
 
-    private static void DrawPolygonShape(PhysicsObject obj, PolygonShape polygon)
+    private void DrawPolygonShape(PhysicsObject obj, PolygonShape polygon)
     {
         (float widthPixels, float heightPixels) = MeasurePolygon(polygon);
 
@@ -306,7 +377,7 @@ public class MainWindow
         Raylib.DrawRectanglePro(rec, origin.ToNumericsVector2(), rotationDegrees, obj.Color);
     }
 
-    private static (float width, float height) MeasurePolygon(PolygonShape polygon)
+    private (float width, float height) MeasurePolygon(PolygonShape polygon)
     {
         float minX = float.MaxValue, maxX = float.MinValue;
         float minY = float.MaxValue, maxY = float.MinValue;
@@ -322,11 +393,11 @@ public class MainWindow
         return ((maxX - minX) * PPM, (maxY - minY) * PPM);
     }
 
-    private static Vector2 WorldToScreen(Vector2 world) => new(
+    private Vector2 WorldToScreen(Vector2 world) => new(
         ScreenCenter.X + world.X * PPM,
         ScreenCenter.Y - world.Y * PPM);
 
-    private static Vector2 ScreenToWorld(Vector2 screen) => new(
+    private Vector2 ScreenToWorld(Vector2 screen) => new(
         (screen.X - ScreenCenter.X) / PPM,
         (ScreenCenter.Y - screen.Y) / PPM);
 }
