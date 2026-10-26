@@ -3,6 +3,7 @@ using nkast.Aether.Physics2D.Collision.Shapes;
 using nkast.Aether.Physics2D.Common;
 using nkast.Aether.Physics2D.Dynamics;
 using nkast.Aether.Physics2D.Dynamics.Joints;
+using Physhicsh.Extensions;
 using Physhicsh.PhysicsObjects;
 using Raylib_cs;
 using rlImGui_cs;
@@ -14,7 +15,6 @@ public class MainWindow
     private const int SCREEN_WIDTH = 1280;
     private const int SCREEN_HEIGHT = 640;
     private const int MAX_FPS = 60;
-    private float PPM = 32f;
     private const float FIXED_DT = 1f / 60f;
 
     private readonly List<PhysicsObject> _physicsObjects = [];
@@ -24,7 +24,7 @@ public class MainWindow
     private float _accumulator;
     private float _gravityScale = 1f;
     private FixedMouseJoint? _mouseJoint;
-    private Fixture _heldFixture = null!;
+    private PhysicsObject _heldObject = null!;
     private Vector2 _mousePosWorld;
 
     private static Vector2 ScreenCenter => new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
@@ -34,6 +34,7 @@ public class MainWindow
     private bool _quickSpawnMenuPending = false;
     private Vector2 _quickSpawnMenuMousePos;
     private Vector2 _quickSpawnMenuScreenPos;
+    private bool _contextMenuOpen = false;
 
     public void Start()
     {
@@ -66,12 +67,12 @@ public class MainWindow
     private void SpawnDemoObjects()
     {
         _physicsObjects.Add(new CirclePhysicsObject(0, 10, 0.5f, Color.Green));
-        _physicsObjects.Add(new RectanglePhysicsObject(0, 0, 1, 1, Color.DarkGray, 1, isStatic: false));
-        _physicsObjects.Add(new RectanglePhysicsObject(5, 0, 1, 1, Color.DarkGray, 1, isStatic: false));
-        _physicsObjects.Add(new RectanglePhysicsObject(0, -5, 10, 2, Color.SkyBlue, isStatic: true));
-        _physicsObjects.Add(new RectanglePhysicsObject(0, -10, 100, 2, Color.SkyBlue, isStatic: true));
-        _physicsObjects.Add(new RectanglePhysicsObject(20, -10, 1, 100, Color.SkyBlue, isStatic: true));
-        _physicsObjects.Add(new RectanglePhysicsObject(-20, -10, 1, 100, Color.SkyBlue, isStatic: true));
+        _physicsObjects.Add(new RectanglePhysicsObject(0, 0, 1, 1, Color.DarkGray, 1));
+        _physicsObjects.Add(new RectanglePhysicsObject(5, 0, 1, 1, Color.DarkGray, 1));
+        _physicsObjects.Add(new RectanglePhysicsObject(0, -5, 10, 2, Color.SkyBlue, bodyType: BodyType.Static));
+        _physicsObjects.Add(new RectanglePhysicsObject(0, -10, 100, 2, Color.SkyBlue, bodyType: BodyType.Static));
+        _physicsObjects.Add(new RectanglePhysicsObject(20, -10, 1, 100, Color.SkyBlue, bodyType: BodyType.Static));
+        _physicsObjects.Add(new RectanglePhysicsObject(-20, -10, 1, 100, Color.SkyBlue, bodyType: BodyType.Static));
 
         foreach (PhysicsObject obj in _physicsObjects)
             obj.Start(_world);
@@ -99,8 +100,6 @@ public class MainWindow
             _quickSpawnMenuMousePos = _mousePosWorld;
             _quickSpawnMenuScreenPos = Raylib.GetMousePosition().ToAetherVector2();
         }
-        if (Raylib.IsKeyDown(KeyboardKey.Minus)) PPM -= 0.5F;
-        if (Raylib.IsKeyDown(KeyboardKey.Equal)) PPM += 0.5F;
     }
 
     private void GraphicsUpdate()
@@ -169,6 +168,7 @@ public class MainWindow
     {
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
         {
+            _contextMenuOpen = true;
             _contextMenuWorldPos = ScreenToWorld(Raylib.GetMousePosition().ToAetherVector2());
 
             ImGui.SetNextWindowPos(Raylib.GetMousePosition());
@@ -181,7 +181,7 @@ public class MainWindow
 
             DrawQuickSpawnMenu(_contextMenuWorldPos);
 
-            if (_heldFixture is not null)
+            if (_heldObject is not null)
             {
                 if (ImGui.MenuItem("Delete"))
                 {
@@ -197,6 +197,7 @@ public class MainWindow
 
             ImGui.PopFont();
             ImGui.EndPopup();
+            _contextMenuOpen = false;
         }
     }
 
@@ -249,12 +250,18 @@ public class MainWindow
 
     private void DebugScaling()
     {
-        if (_heldFixture?.Shape is CircleShape circle)
+        if (_heldObject is CirclePhysicsObject circle)
         {
             if (Raylib.IsKeyDown(KeyboardKey.H))
                 circle.Radius += 0.01f;
             if (Raylib.IsKeyDown(KeyboardKey.J))
                 circle.Radius -= 0.01f;
+        }
+        else if ((_heldObject is RectanglePhysicsObject rect) && Raylib.IsKeyDown(KeyboardKey.G))
+        {
+            Raylib.DrawText(rect.Fixture.Shape.Radius.ToString(), 10, 140, 30, Color.Magenta);
+
+            rect.Fixture.Shape.Radius += 0.01f;
         }
     }
 
@@ -262,7 +269,7 @@ public class MainWindow
     {
         RectanglePhysicsObject newRect = new(
             pos.X, pos.Y, 1, 1,
-            RandomColor(), 1, isStatic: false);
+            RandomColor(), 1);
 
         _physicsObjects.Add(newRect);
         newRect.Start(_world);
@@ -272,7 +279,7 @@ public class MainWindow
     {
         CirclePhysicsObject newBall = new(
             pos.X, pos.Y, _rng.NextFloat(0.2f, 0.5f),
-            RandomColor(), 1, isStatic: false);
+            RandomColor(), 1);
 
         _physicsObjects.Add(newBall);
         newBall.Start(_world);
@@ -285,25 +292,30 @@ public class MainWindow
 
     private void HandleMouseInput()
     {
-        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-            BeginDrag();
-        else if (_mouseJoint != null && Raylib.IsMouseButtonDown(MouseButton.Left))
-            UpdateDrag();
-        else if (_mouseJoint != null && Raylib.IsMouseButtonReleased(MouseButton.Left))
-            EndDrag();
+        if (!_contextMenuOpen)
+        {
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+                BeginDrag();
+            else if (_mouseJoint != null && Raylib.IsMouseButtonDown(MouseButton.Left))
+                UpdateDrag();
+            else if (_mouseJoint != null && Raylib.IsMouseButtonReleased(MouseButton.Left))
+                EndDrag();
+        }
     }
 
     private void BeginDrag()
     {
         Vector2 mouseWorld = ScreenToWorld(Raylib.GetMousePosition().ToAetherVector2());
-        _heldFixture = _world.TestPoint(mouseWorld);
+        Fixture fixture = _world.TestPoint(mouseWorld);
 
-        if (_heldFixture == null || _heldFixture.Body.BodyType != BodyType.Dynamic)
+        if (fixture == null || fixture.Body.BodyType != BodyType.Dynamic)
             return;
 
-        _mouseJoint = new FixedMouseJoint(_heldFixture.Body, mouseWorld)
+        _heldObject = fixture.Tag as PhysicsObject;
+
+        _mouseJoint = new FixedMouseJoint(fixture.Body, mouseWorld)
         {
-            MaxForce = 1000f * _heldFixture.Body.Mass
+            MaxForce = 1000f * fixture.Body.Mass
         };
         _world.Add(_mouseJoint);
     }
@@ -319,14 +331,12 @@ public class MainWindow
         _mouseJoint = null;
     }
 
-
-
     private void DrawDebugText()
     {
         Raylib.DrawText(Raylib.GetFPS().ToString(), 10, 10, 30, Color.Magenta);
         Raylib.DrawText(Raylib.GetFrameTime().ToString(), 10, 40, 30, Color.Magenta);
-        if (_heldFixture is not null)
-            Raylib.DrawText($"{_heldFixture.Body.Position}", 10, 70, 30, Color.Magenta);
+        if (_heldObject is not null)
+            Raylib.DrawText($"{_heldObject.Body.Position}", 10, 70, 30, Color.Magenta);
     }
 
     private void DrawPhysicsObjects()
@@ -350,18 +360,7 @@ public class MainWindow
 
     private void DrawCircleShape(PhysicsObject obj, CircleShape circle)
     {
-        float cos = MathF.Cos(obj.Body.Rotation);
-        float sin = MathF.Sin(obj.Body.Rotation);
-        Vector2 local = circle.Position;
 
-        Vector2 world = new(
-            obj.Body.Position.X + cos * local.X - sin * local.Y,
-            obj.Body.Position.Y + sin * local.X + cos * local.Y);
-
-        Vector2 screenPos = WorldToScreen(world);
-        float screenRadius = circle.Radius * PPM;
-
-        Raylib.DrawCircleV(screenPos.ToNumericsVector2(), screenRadius, obj.Color);
     }
 
     private void DrawPolygonShape(PhysicsObject obj, PolygonShape polygon)
@@ -370,7 +369,8 @@ public class MainWindow
 
         Vector2 screenPos = WorldToScreen(obj.Body.Position);
 
-        Rectangle rec = new(screenPos.X, screenPos.Y, widthPixels, heightPixels);
+        float radiusFactor = obj.Fixture.Shape.Radius * Consts.PPM;
+        Rectangle rec = new(screenPos.X + radiusFactor, screenPos.Y + radiusFactor, widthPixels + radiusFactor, heightPixels + radiusFactor);
         Vector2 origin = new(widthPixels / 2f, heightPixels / 2f);
         float rotationDegrees = -obj.Body.Rotation * (180f / MathF.PI);
 
@@ -390,14 +390,14 @@ public class MainWindow
             maxY = MathF.Max(maxY, v.Y);
         }
 
-        return ((maxX - minX) * PPM, (maxY - minY) * PPM);
+        return ((maxX - minX) * Consts.PPM, (maxY - minY) * Consts.PPM);
     }
 
     private Vector2 WorldToScreen(Vector2 world) => new(
-        ScreenCenter.X + world.X * PPM,
-        ScreenCenter.Y - world.Y * PPM);
+        ScreenCenter.X + world.X * Consts.PPM,
+        ScreenCenter.Y - world.Y * Consts.PPM);
 
     private Vector2 ScreenToWorld(Vector2 screen) => new(
-        (screen.X - ScreenCenter.X) / PPM,
-        (ScreenCenter.Y - screen.Y) / PPM);
+        (screen.X - ScreenCenter.X) / Consts.PPM,
+        (ScreenCenter.Y - screen.Y) / Consts.PPM);
 }

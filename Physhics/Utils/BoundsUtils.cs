@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace Physhicsh
+namespace Physhicsh.Utils
 {
     public static class BoundsUtils
     {

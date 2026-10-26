@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace Physhicsh;
+namespace Physhicsh.Utils;
 
 public class Vector2Int(int p_x = 0, int p_y = 0)
 {

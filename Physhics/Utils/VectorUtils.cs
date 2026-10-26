@@ -1,6 +1,6 @@
 ﻿using nkast.Aether.Physics2D.Common;
 
-namespace Physhicsh
+namespace Physhicsh.Utils
 {
     public static class VectorUtils
     {

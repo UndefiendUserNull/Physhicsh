@@ -1,4 +1,4 @@
-﻿namespace Physhicsh;
+﻿namespace Physhicsh.Extensions;
 
 public static class RandomExtensions
 {
