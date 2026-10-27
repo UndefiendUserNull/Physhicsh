@@ -24,7 +24,8 @@ public class MainWindow
     private Vector2 _mousePosWorld;
     private PhysicsObject? _propertiesObject;
     private bool _showUglyDebug = false;
-
+    private System.Numerics.Vector3 _cachedColor;
+    private bool _hasCachedColor;
     public void Start()
     {
         Raylib.InitWindow(Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT, "Physhicsh");
@@ -238,13 +239,19 @@ public class MainWindow
             {
                 if (_propertiesObject is not null)
                 {
-                    //Raylib.DrawText(_propertiesObject.Color.ToVector3().ToNumericsVector3().ToString(), 60, 60, 20, Color.Brown);
+                    Color currentColor = _propertiesObject.Color;
+
                     System.Numerics.Vector3 colorRefSlider = _propertiesObject.Color.ToVector3().ToNumericsVector3() / 255f;
-                    if (ImGui.ColorEdit3("Color", ref colorRefSlider))
+
+                    if (!_hasCachedColor || currentColor != _cachedColor.ToAetherVector3().ToColor())
                     {
-                        System.Numerics.Vector3 c = colorRefSlider;
-                        //_propertiesObject.Color = new Vector3(c.X, c.Y, c.Z).ToColor();
-                        _propertiesObject.Color = (colorRefSlider).ToAetherVector3().ToColor();
+                        _cachedColor = currentColor.ToVector3().ToNumericsVector3() / 255f;
+                        _hasCachedColor = true;
+                    }
+
+                    if (ImGui.ColorEdit3("Color", ref _cachedColor))
+                    {
+                        _propertiesObject.Color = _cachedColor.ToAetherVector3().ToColor();
                     }
 
                     float massRefSlider = _propertiesObject.Body.Mass;
