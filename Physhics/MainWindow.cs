@@ -89,15 +89,19 @@ public class MainWindow
             Vector2 worldPos = _mousePosWorld;
             _ui.ShowPopup("##world_context", Raylib.GetMousePosition(), () =>
             {
-                DrawQuickSpawnMenu(worldPos);
+                if (ImGui.BeginMenu("Quick spawn"))
+                {
+                    DrawQuickSpawnMenu(worldPos);
+                    ImGui.EndMenu();
+                }
                 if (_pickedObject is not null)
                 {
                     ImGui.Separator();
                     if (ImGui.MenuItem("Delete")) DeletePhysicsObject(_pickedObject);
                     if (ImGui.MenuItem("Properties"))
                     {
-                        _imgVault.ShowProperties = true;
                         _propertiesObject = _pickedObject;
+                        _imgVault.ShowProperties = true;
                     }
                 }
             });
@@ -106,14 +110,12 @@ public class MainWindow
 
     private void HandleShortcuts()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.R)) SpawnRectangle(_mousePosWorld);
-        if (Raylib.IsKeyPressed(KeyboardKey.C)) SpawnCircle(_mousePosWorld);
+        if (Raylib.IsKeyPressedRepeat(KeyboardKey.R) || Raylib.IsKeyPressed(KeyboardKey.R)) SpawnRectangle(_mousePosWorld);
+        if (Raylib.IsKeyPressedRepeat(KeyboardKey.C) || Raylib.IsKeyPressed(KeyboardKey.C)) SpawnCircle(_mousePosWorld);
         if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
-            _ui.ShowPopup("##quick_spawn", Raylib.GetMousePosition(), () => DrawQuickSpawnMenu(_mousePosWorld));
-            //_imgVault.QuickSpawnMenuPending = true;
-            //_imgVault.QuickSpawnMenuMousePos = _mousePosWorld;
-            //_imgVault.QuickSpawnMenuScreenPos = Raylib.GetMousePosition().ToAetherVector2();
+            Vector2 mousePos = _mousePosWorld;
+            _ui.ShowPopup("##quick_spawn", Raylib.GetMousePosition(), () => DrawQuickSpawnMenu(mousePos));
         }
         if (Raylib.IsKeyPressed(KeyboardKey.V) && _pickedObject is not null)
         {
@@ -151,103 +153,43 @@ public class MainWindow
 
         DrawPropertiesWindow();
 
+        if (_showUglyDebug)
+            DrawDebugText();
+
         _ui.EndFrame();
 
         #endregion
 
         DrawPhysicsObjects();
-        if (_showUglyDebug)
-            DrawDebugText();
+
 
         rlImGui.End();
         Raylib.EndDrawing();
-    }
-
-    private void ImGuiQuickSpawnPopup()
-    {
-        if (_imgVault.QuickSpawnMenuPending)
-        {
-            _imgVault.QuickSpawnMenuPending = false;
-            ImGui.SetNextWindowPos(_imgVault.QuickSpawnMenuScreenPos.ToNumericsVector2());
-            ImGui.OpenPopup("##quick_spawn");
-        }
-
-        if (ImGui.BeginPopup("##quick_spawn"))
-        {
-            ImGui.PushFont(_imgVault.ImGuiFont);
-            DrawQuickSpawnMenu(_mousePosWorld);
-            ImGui.PopFont();
-            ImGui.EndPopup();
-        }
-    }
-
-    private void ImGuiContextMenu()
-    {
-        if (Raylib.IsMouseButtonPressed(MouseButton.Right))
-        {
-            if (_pickedObject == null) PickFixture();
-            _imgVault.ContextMenuOpen = true;
-            _imgVault.ContextMenuWorldPos = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
-
-            ImGui.SetNextWindowPos(Raylib.GetMousePosition());
-            ImGui.OpenPopup("##world_context");
-        }
-
-        if (ImGui.BeginPopup("##world_context"))
-        {
-            ImGui.PushFont(_imgVault.ImGuiFont);
-
-            DrawQuickSpawnMenu(_imgVault.ContextMenuWorldPos);
-
-            if (_pickedObject is not null)
-            {
-                if (ImGui.MenuItem("Delete"))
-                {
-                    DeletePhysicsObject(_pickedObject);
-                }
-
-                if (ImGui.MenuItem("Properties"))
-                {
-                    _imgVault.ShowProperties = true;
-                    _propertiesObject = _pickedObject;
-                }
-            }
-
-
-            ImGui.PopFont();
-            ImGui.EndPopup();
-        }
-        else
-        {
-            _imgVault.ContextMenuOpen = false;
-        }
     }
 
     private void DeletePhysicsObject(PhysicsObject obj)
     {
         obj.Delete();
         _physicsObjects.Remove(obj);
+        if (_pickedObject == _propertiesObject)
+            _propertiesObject = null;
         if (ReferenceEquals(_pickedObject, obj))
             _pickedObject = null!;
     }
 
     private void DrawQuickSpawnMenu(Vector2 spawnPos)
     {
-        if (ImGui.BeginMenu("Quick Spawn"))
+        if (ImGui.MenuItem("Rectangle", "r"))
         {
-            if (ImGui.MenuItem("Rectangle", "r"))
-            {
-                SpawnRectangle(spawnPos);
+            SpawnRectangle(spawnPos);
 
-            }
-
-            if (ImGui.MenuItem("Circle", "c"))
-            {
-                SpawnCircle(spawnPos);
-            }
-
-            ImGui.EndMenu();
         }
+
+        if (ImGui.MenuItem("Circle", "c"))
+        {
+            SpawnCircle(spawnPos);
+        }
+
     }
 
     private void DrawPropertiesWindow()
@@ -256,13 +198,18 @@ public class MainWindow
 
         using (_ui.UseFont())
         {
-            if (ImGui.Begin("Properties"))
+            if (ImGui.Begin("Properties", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoTitleBar))
             {
+                if (ImGui.SmallButton("X"))
+                {
+                    _imgVault.ShowProperties = false;
+                    _propertiesObject = null;
+                    ImGui.End();
+                    return;
+                }
                 if (_propertiesObject is not null)
                 {
                     Color currentColor = _propertiesObject.Color;
-
-                    System.Numerics.Vector3 colorRefSlider = _propertiesObject.Color.ToVector3().ToNumericsVector3() / 255f;
 
                     if (!_hasCachedColor || currentColor != _cachedColor.ToAetherVector3().ToColor())
                     {
@@ -293,7 +240,7 @@ public class MainWindow
                     else if (_propertiesObject is RectanglePhysicsObject rect)
                     {
                         System.Numerics.Vector2 sizeRefSlider = rect.Size.ToNumericsVector2();
-                        if (ImGui.SliderFloat2("Size", ref sizeRefSlider, 0.001f, 500f))
+                        if (ImGui.SliderFloat2("Size", ref sizeRefSlider, 0.001f, 100f))
                         {
                             rect.Resize(sizeRefSlider.ToAetherVector2());
                         }
@@ -303,8 +250,10 @@ public class MainWindow
                 {
                     ImGui.Text("No object.");
                 }
+
+                ImGui.End();
             }
-            ImGui.End();
+
         }
 
     }
@@ -430,16 +379,20 @@ public class MainWindow
 
     private void DrawDebugText()
     {
-        Raylib.DrawText(Raylib.GetFPS().ToString(), 10, 10, 30, Color.Magenta);
-        Raylib.DrawText(Raylib.GetFrameTime().ToString(), 10, 40, 30, Color.Magenta);
-        if (_pickedObject is not null)
+        _ui.BeginWindow("##debug", ImGuiWindowFlags.NoTitleBar, () =>
         {
-            Raylib.DrawText($"{_pickedObject.Body.Position}", 10, 70, 30, Color.Magenta);
-            Raylib.DrawText($"{_pickedObject.Body.BodyType} | {_pickedObject.BodyType}", 10, 100, 30, Color.Magenta);
+            ImGui.Text($"FPS: {Raylib.GetFPS().ToString()}");
+            ImGui.Text($"Frametime: {Raylib.GetFrameTime().ToString()}");
+            ImGui.Text($"Accumulator: {_accumulator}");
+            ImGui.Text($"Count: {_physicsObjects.Count}");
+            ImGui.Separator();
 
-        }
-
-        Raylib.DrawText($"{_accumulator}", 10, 130, 30, Color.Magenta);
+            if (_pickedObject is not null)
+            {
+                ImGui.Text($"Holding Position: {_pickedObject.Body.Position}");
+                ImGui.Text($"BodyType: {_pickedObject.Body.BodyType}");
+            }
+        });
     }
 
     private void DrawPhysicsObjects()

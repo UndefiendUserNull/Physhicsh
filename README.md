@@ -5,6 +5,7 @@
 
 ![sc1](/docs/screenshot1.jpg)
 ![sc2](/docs/screenshot2.jpg)
+![sc3](/docs/screenshot3.jpg)
 
 ## Controls
 

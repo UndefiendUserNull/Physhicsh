@@ -115,4 +115,17 @@ public sealed class ImGuiUI(ImFontPtr font)
         build(new());
         ImGui.EndMenu();
     }
+
+    public void BeginWindow(string label, ImGuiWindowFlags windowFlags, Action body)
+    {
+        if (ImGui.Begin(label, windowFlags))
+        {
+            using (UseFont())
+            {
+                body();
+            }
+            ImGui.End();
+        }
+    }
+
 }
