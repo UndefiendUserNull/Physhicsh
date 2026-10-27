@@ -1,6 +1,12 @@
-ڤيچيكش
+# Physhicsh | ڤيچيكش
 
-# Controls
+> [!WARNING]  
+> Under development. Expect crashes.
+
+![sc1](/docs/screenshot1.jpg)
+![sc2](/docs/screenshot2.jpg)
+
+## Controls
 
 ### Main:
 
@@ -23,6 +29,10 @@
 **E** : Rotate to right (unstable)
 
 **Q** : Rotate to Left (unstable)
+
+**H** : Increase circle radius (should be holding a circle)
+
+**J** : Decrease circle radius (should be holding a circle)
 
 ### Other:
 
