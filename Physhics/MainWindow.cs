@@ -14,6 +14,7 @@ public class MainWindow
 {
     private readonly List<PhysicsObject> _physicsObjects = [];
     private readonly Random _rng = new();
+    private readonly ImGuiVault _imgVault = new();
 
     private World _world = null!;
     private float _accumulator;
@@ -21,24 +22,19 @@ public class MainWindow
     private FixedMouseJoint? _mouseJoint;
     private PhysicsObject _pickedObject = null!;
     private Vector2 _mousePosWorld;
-    private readonly string _imGuiFontPath = "fonts/arial.ttf";
-    private ImFontPtr _imGuiFont;
-    private Vector2 _contextMenuWorldPos;
-    private bool _quickSpawnMenuPending = false;
-    private Vector2 _quickSpawnMenuMousePos;
-    private Vector2 _quickSpawnMenuScreenPos;
-    private bool _contextMenuOpen = false;
 
     public void Start()
     {
         Raylib.InitWindow(Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT, "Physhicsh");
+        Raylib.MaximizeWindow();
+        Raylib.SetWindowFocused();
         Raylib.SetTargetFPS(Consts.MAX_FPS);
 
         // Load font
         rlImGui.SetupUserFonts += io =>
         {
-            _imGuiFont = io.Fonts.AddFontFromFileTTF(
-            _imGuiFontPath,
+            _imgVault.ImGuiFont = io.Fonts.AddFontFromFileTTF(
+            _imgVault.IMGUI_FONT_PATH,
             18.0f);
         };
 
@@ -89,9 +85,9 @@ public class MainWindow
         if (Raylib.IsKeyPressed(KeyboardKey.C)) SpawnCircle(_mousePosWorld);
         if (Raylib.IsKeyPressed(KeyboardKey.Q))
         {
-            _quickSpawnMenuPending = true;
-            _quickSpawnMenuMousePos = _mousePosWorld;
-            _quickSpawnMenuScreenPos = Raylib.GetMousePosition().ToAetherVector2();
+            _imgVault.QuickSpawnMenuPending = true;
+            _imgVault.QuickSpawnMenuMousePos = _mousePosWorld;
+            _imgVault.QuickSpawnMenuScreenPos = Raylib.GetMousePosition().ToAetherVector2();
         }
         if (Raylib.IsKeyPressed(KeyboardKey.V) && _pickedObject is not null)
         {
@@ -118,24 +114,6 @@ public class MainWindow
 
         #endregion
 
-        if (_quickSpawnMenuPending)
-        {
-            _quickSpawnMenuPending = false;
-            ImGui.SetNextWindowPos(_quickSpawnMenuMousePos.ToNumericsVector2());
-            ImGui.OpenPopup("##quick_spawn");
-
-            if (ImGui.BeginPopup("##quick_spawn"))
-            {
-                ImGui.PushFont(_imGuiFont);
-
-                DrawQuickSpawnMenu(_quickSpawnMenuMousePos);
-
-                ImGui.PopFont();
-                ImGui.EndPopup();
-            }
-
-        }
-
         DrawPhysicsObjects();
         DrawDebugText();
 
@@ -146,18 +124,17 @@ public class MainWindow
 
     private void ImGuiQuickSpawnPopup()
     {
-        if (_quickSpawnMenuPending)
+        if (_imgVault.QuickSpawnMenuPending)
         {
-            _quickSpawnMenuPending = false;
-            ImGui.SetNextWindowPos(_quickSpawnMenuScreenPos.ToNumericsVector2());
+            _imgVault.QuickSpawnMenuPending = false;
+            ImGui.SetNextWindowPos(_imgVault.QuickSpawnMenuScreenPos.ToNumericsVector2());
             ImGui.OpenPopup("##quick_spawn");
         }
 
-        // BeginPopup is called EVERY frame so the popup stays alive.
         if (ImGui.BeginPopup("##quick_spawn"))
         {
-            ImGui.PushFont(_imGuiFont);
-            DrawQuickSpawnMenu(_mousePosWorld);   // world pos for spawning
+            ImGui.PushFont(_imgVault.ImGuiFont);
+            DrawQuickSpawnMenu(_mousePosWorld);
             ImGui.PopFont();
             ImGui.EndPopup();
         }
@@ -167,8 +144,9 @@ public class MainWindow
     {
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
         {
-            _contextMenuOpen = true;
-            _contextMenuWorldPos = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
+            PickFixture();
+            _imgVault.ContextMenuOpen = true;
+            _imgVault.ContextMenuWorldPos = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
 
             ImGui.SetNextWindowPos(Raylib.GetMousePosition());
             ImGui.OpenPopup("##world_context");
@@ -176,27 +154,35 @@ public class MainWindow
 
         if (ImGui.BeginPopup("##world_context"))
         {
-            ImGui.PushFont(_imGuiFont);
+            ImGui.PushFont(_imgVault.ImGuiFont);
 
-            DrawQuickSpawnMenu(_contextMenuWorldPos);
+            DrawQuickSpawnMenu(_imgVault.ContextMenuWorldPos);
 
             if (_pickedObject is not null)
             {
                 if (ImGui.MenuItem("Delete"))
                 {
-
+                    _pickedObject.Delete();
+                    _physicsObjects.Remove(_pickedObject);
+                    _pickedObject = null;
                 }
 
                 if (ImGui.MenuItem("Properties"))
                 {
-
+                    if (ImGui.BeginPopup("##properties"))
+                    {
+                        ImGui.Text("A7a");
+                    }
                 }
             }
 
 
             ImGui.PopFont();
             ImGui.EndPopup();
-            _contextMenuOpen = false;
+        }
+        else
+        {
+            _imgVault.ContextMenuOpen = false;
         }
     }
 
@@ -233,11 +219,22 @@ public class MainWindow
 
     private void StepPhysics(float frameTime)
     {
+        frameTime = Math.Min(frameTime, Consts.MAX_FRAME_TIME);
         _accumulator += frameTime;
-        while (_accumulator >= Consts.FIXED_DT)
+
+        int stepCount = 0;
+
+        while (_accumulator >= Consts.FIXED_DT && stepCount < Consts.MAX_SUBSTEPS)
         {
             _world.Step(Consts.FIXED_DT);
             _accumulator -= Consts.FIXED_DT;
+            stepCount++;
+        }
+
+        // if while loop blocked
+        if (_accumulator >= Consts.FIXED_DT)
+        {
+            _accumulator = 0f;
         }
     }
 
@@ -285,30 +282,46 @@ public class MainWindow
 
     private void HandleMouseInput()
     {
-        if (!_contextMenuOpen)
+        if (!_imgVault.ContextMenuOpen)
         {
             if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                PickFixture();
                 BeginDrag();
+            }
             else if (_mouseJoint != null && Raylib.IsMouseButtonDown(MouseButton.Left))
+            {
                 UpdateDrag();
+            }
             else if (_mouseJoint != null && Raylib.IsMouseButtonReleased(MouseButton.Left))
+            {
                 EndDrag();
+            }
         }
     }
 
-    private void BeginDrag()
+    private Fixture? PickFixture()
     {
         Vector2 mouseWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
         Fixture fixture = _world.TestPoint(mouseWorld);
 
-        if (fixture == null)
-            return;
+        if (fixture != null)
+            _pickedObject = fixture.Tag as PhysicsObject;
+        else
+            _pickedObject = null;
 
-        _pickedObject = fixture.Tag as PhysicsObject;
+        return fixture == null ? null : fixture;
+    }
 
-        _mouseJoint = new FixedMouseJoint(fixture.Body, mouseWorld)
+    private void BeginDrag()
+    {
+        if (_pickedObject == null) return;
+
+        Vector2 mouseWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
+
+        _mouseJoint = new FixedMouseJoint(_pickedObject.Body, mouseWorld)
         {
-            MaxForce = 1000f * fixture.Body.Mass
+            MaxForce = 1000f * _pickedObject.Body.Mass
         };
         _world.Add(_mouseJoint);
     }

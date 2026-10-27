@@ -26,4 +26,10 @@ public class PhysicsObject(float x, float y, Color color, BodyType bodyType = Bo
     {
 
     }
+    public virtual void Delete()
+    {
+        Body.Remove(Fixture);
+        Body.Tag = null;
+        Body = null!;
+    }
 }
