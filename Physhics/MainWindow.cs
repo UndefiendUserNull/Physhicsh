@@ -23,11 +23,11 @@ public class MainWindow
     private PhysicsObject _pickedObject = null!;
     private Vector2 _mousePosWorld;
     private PhysicsObject? _propertiesObject;
+    private bool _showUglyDebug = false;
 
     public void Start()
     {
         Raylib.InitWindow(Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT, "Physhicsh");
-        Raylib.MaximizeWindow();
         Raylib.SetWindowFocused();
         Raylib.SetTargetFPS(Consts.MAX_FPS);
 
@@ -84,7 +84,7 @@ public class MainWindow
     {
         if (Raylib.IsKeyPressed(KeyboardKey.R)) SpawnRectangle(_mousePosWorld);
         if (Raylib.IsKeyPressed(KeyboardKey.C)) SpawnCircle(_mousePosWorld);
-        if (Raylib.IsKeyPressed(KeyboardKey.Q))
+        if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
             _imgVault.QuickSpawnMenuPending = true;
             _imgVault.QuickSpawnMenuMousePos = _mousePosWorld;
@@ -95,6 +95,21 @@ public class MainWindow
             if (_pickedObject.BodyType == BodyType.Static) _pickedObject.BodyType = BodyType.Dynamic;
             else if (_pickedObject.BodyType == BodyType.Dynamic) _pickedObject.BodyType = BodyType.Static;
 
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.X) && _pickedObject is not null) DeletePhysicsObject(_pickedObject);
+        if (Raylib.IsKeyPressed(KeyboardKey.F3)) _showUglyDebug = !_showUglyDebug;
+
+        // Rotation
+
+        if (Raylib.IsKeyDown(KeyboardKey.Q) && _pickedObject is not null)
+        {
+            _pickedObject.Body.Rotation -= 0.05f;
+            _pickedObject.Body.ResetDynamics();
+        }
+        if (Raylib.IsKeyDown(KeyboardKey.E) && _pickedObject is not null)
+        {
+            _pickedObject.Body.Rotation += 0.05f;
+            _pickedObject.Body.ResetDynamics();
         }
     }
 
@@ -117,7 +132,8 @@ public class MainWindow
         #endregion
 
         DrawPhysicsObjects();
-        DrawDebugText();
+        if (_showUglyDebug)
+            DrawDebugText();
 
         ImGui.End();
         rlImGui.End();
@@ -164,9 +180,7 @@ public class MainWindow
             {
                 if (ImGui.MenuItem("Delete"))
                 {
-                    _pickedObject.Delete();
-                    _physicsObjects.Remove(_pickedObject);
-                    _pickedObject = null!;
+                    DeletePhysicsObject(_pickedObject);
                 }
 
                 if (ImGui.MenuItem("Properties"))
@@ -184,6 +198,13 @@ public class MainWindow
         {
             _imgVault.ContextMenuOpen = false;
         }
+    }
+
+    private void DeletePhysicsObject(PhysicsObject obj)
+    {
+        obj.Delete();
+        _physicsObjects.Remove(_pickedObject);
+        obj = null!;
     }
 
     private void DrawQuickSpawnMenu(Vector2 spawnPos)
@@ -217,8 +238,38 @@ public class MainWindow
             {
                 if (_propertiesObject is not null)
                 {
-                    ImGui.Text($"{_propertiesObject.Color}");
-                    ImGui.Text($"Mass: {_propertiesObject.Body.Mass}");
+                    //Raylib.DrawText(_propertiesObject.Color.ToVector3().ToNumericsVector3().ToString(), 60, 60, 20, Color.Brown);
+                    System.Numerics.Vector3 colorRefSlider = _propertiesObject.Color.ToVector3().ToNumericsVector3() / 255f;
+                    if (ImGui.ColorEdit3("Color", ref colorRefSlider))
+                    {
+                        System.Numerics.Vector3 c = colorRefSlider;
+                        //_propertiesObject.Color = new Vector3(c.X, c.Y, c.Z).ToColor();
+                        _propertiesObject.Color = (colorRefSlider).ToAetherVector3().ToColor();
+                    }
+
+                    float massRefSlider = _propertiesObject.Body.Mass;
+
+                    if (ImGui.SliderFloat("Mass", ref massRefSlider, 0f, 1000f))
+                    {
+                        _propertiesObject.Body.Mass = massRefSlider;
+                    }
+
+                    if (_propertiesObject is CirclePhysicsObject circle)
+                    {
+                        float r = circle.Radius;
+                        if (ImGui.SliderFloat("Radius", ref r, 0f, 3f))
+                        {
+                            circle.Radius = r;
+                        }
+                    }
+                    else if (_propertiesObject is RectanglePhysicsObject rect)
+                    {
+                        System.Numerics.Vector2 sizeRefSlider = rect.Size.ToNumericsVector2();
+                        if (ImGui.SliderFloat2("Size", ref sizeRefSlider, 0.001f, 500f))
+                        {
+                            rect.Resize(sizeRefSlider.ToAetherVector2());
+                        }
+                    }
                 }
                 else
                 {

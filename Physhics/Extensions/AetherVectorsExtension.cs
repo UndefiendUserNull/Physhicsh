@@ -1,5 +1,6 @@
 ﻿using nkast.Aether.Physics2D.Common;
 using Physhicsh.Utils;
+using Raylib_cs;
 
 namespace Physhicsh.Extensions;
 
@@ -16,4 +17,9 @@ public static class AetherVectorsExtension
         (screen.X - Consts.ScreenCenter.X) / Consts.PPM,
         (Consts.ScreenCenter.Y - screen.Y) / Consts.PPM);
 
+    public static Vector3 ToVector3(this Color c) => new(c.R, c.B, c.G);
+    public static Color ToColor(this Vector3 c) => new(c.X, c.Y, c.Z);
+
+    public static Vector3 ToAetherVector3(this System.Numerics.Vector3 v) => new(v.X, v.Y, v.Z);
+    public static System.Numerics.Vector3 ToNumericsVector3(this Vector3 v) => new(v.X, v.Y, v.Z);
 }

@@ -6,7 +6,7 @@ namespace Physhicsh
     {
         public const float PPM = 32f;
         public const int SCREEN_WIDTH = 1280;
-        public const int SCREEN_HEIGHT = 720;
+        public const int SCREEN_HEIGHT = 640;
         public const int MAX_FPS = 60;
         public const int MAX_SUBSTEPS = 5;
         public const float FIXED_DT = 1f / 60f;

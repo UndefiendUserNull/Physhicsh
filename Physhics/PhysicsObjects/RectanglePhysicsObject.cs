@@ -14,19 +14,15 @@ namespace Physhicsh.PhysicsObjects
         public override void Start(World world)
         {
             base.Start(world);
-            Fixture = Body.CreateRectangle(Size.X, Size.Y, density, Vector2.Zero);
-            Fixture.Restitution = 0.3f;
-            Fixture.Friction = 0.5f;
+            BuildFixture();
 
-            Fixture.Tag = this;
-
-            (_widthPx, _heightPx) = MeasurePolygon(Fixture.Shape as PolygonShape);
         }
 
         public override void Draw()
         {
             base.Draw();
 
+            (_widthPx, _heightPx) = MeasurePolygon(Fixture.Shape as PolygonShape);
             Vector2 screenPos = Body.Position.WorldToScreen();
 
             Rectangle rec = new(screenPos.X, screenPos.Y, _widthPx, _heightPx);
@@ -34,6 +30,35 @@ namespace Physhicsh.PhysicsObjects
             float rotationDegrees = -Body.Rotation * (180f / MathF.PI);
 
             Raylib.DrawRectanglePro(rec, origin.ToNumericsVector2(), rotationDegrees, Color);
+        }
+
+        public void Resize(Vector2 newSize)
+        {
+            if (newSize == Vector2.Zero) return;
+            if (newSize == Size) return;
+
+            Size = newSize;
+
+            float friction = Fixture.Friction;
+            float restit = Fixture.Restitution;
+            object tag = Fixture.Tag;
+
+            Body.Remove(Fixture);
+
+            BuildFixture();
+
+            Fixture.Friction = friction;
+            Fixture.Restitution = restit;
+            Fixture.Tag = tag;
+
+        }
+
+        private void BuildFixture()
+        {
+            Fixture = Body.CreateRectangle(Size.X, Size.Y, 1f, Vector2.Zero);
+            Fixture.Restitution = 0.3f;
+            Fixture.Friction = 0.5f;
+            Fixture.Tag = this;
         }
 
         // Vibe coded
