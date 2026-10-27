@@ -22,6 +22,7 @@ public class MainWindow
     private FixedMouseJoint? _mouseJoint;
     private PhysicsObject _pickedObject = null!;
     private Vector2 _mousePosWorld;
+    private PhysicsObject? _propertiesObject;
 
     public void Start()
     {
@@ -111,6 +112,7 @@ public class MainWindow
 
         ImGuiContextMenu();
         ImGuiQuickSpawnPopup();
+        DrawPropertiesWindow();
 
         #endregion
 
@@ -144,7 +146,7 @@ public class MainWindow
     {
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
         {
-            PickFixture();
+            if (_pickedObject == null) PickFixture();
             _imgVault.ContextMenuOpen = true;
             _imgVault.ContextMenuWorldPos = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
 
@@ -164,15 +166,13 @@ public class MainWindow
                 {
                     _pickedObject.Delete();
                     _physicsObjects.Remove(_pickedObject);
-                    _pickedObject = null;
+                    _pickedObject = null!;
                 }
 
                 if (ImGui.MenuItem("Properties"))
                 {
-                    if (ImGui.BeginPopup("##properties"))
-                    {
-                        ImGui.Text("A7a");
-                    }
+                    _imgVault.ShowProperties = true;
+                    _propertiesObject = _pickedObject;
                 }
             }
 
@@ -203,6 +203,33 @@ public class MainWindow
 
             ImGui.EndMenu();
         }
+    }
+
+    private void DrawPropertiesWindow()
+    {
+        if (!_imgVault.ShowProperties) return;
+
+        ImGui.PushFont(_imgVault.ImGuiFont);
+
+        if (_imgVault.ShowProperties)
+        {
+            if (ImGui.Begin("Properties"))
+            {
+                if (_propertiesObject is not null)
+                {
+                    ImGui.Text($"{_propertiesObject.Color}");
+                    ImGui.Text($"Mass: {_propertiesObject.Body.Mass}");
+                }
+                else
+                {
+                    ImGui.Text("No object.");
+                }
+            }
+            ImGui.End();
+
+            ImGui.PopFont();
+        }
+
     }
 
     private static void StartImGui(ImGuiIOPtr io)
