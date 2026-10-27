@@ -19,11 +19,6 @@ public class CirclePhysicsObject(float x, float y, float radius, Color color, fl
 
     }
 
-    public override void PhysicsUpdate(World world)
-    {
-        base.PhysicsUpdate(world);
-
-    }
 
     public override void Draw()
     {

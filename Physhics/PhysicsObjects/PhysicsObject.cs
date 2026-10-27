@@ -19,7 +19,7 @@ public class PhysicsObject(float x, float y, Color color, BodyType bodyType = Bo
 
     public virtual void PhysicsUpdate(World world)
     {
-
+        if (Body.BodyType != BodyType) Body.BodyType = BodyType;
     }
 
     public virtual void Draw()

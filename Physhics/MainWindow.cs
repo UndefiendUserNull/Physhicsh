@@ -19,7 +19,7 @@ public class MainWindow
     private float _accumulator;
     private float _gravityScale = 1f;
     private FixedMouseJoint? _mouseJoint;
-    private PhysicsObject _heldObject = null!;
+    private PhysicsObject _pickedObject = null!;
     private Vector2 _mousePosWorld;
     private readonly string _imGuiFontPath = "fonts/arial.ttf";
     private ImFontPtr _imGuiFont;
@@ -92,6 +92,12 @@ public class MainWindow
             _quickSpawnMenuPending = true;
             _quickSpawnMenuMousePos = _mousePosWorld;
             _quickSpawnMenuScreenPos = Raylib.GetMousePosition().ToAetherVector2();
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.V) && _pickedObject is not null)
+        {
+            if (_pickedObject.BodyType == BodyType.Static) _pickedObject.BodyType = BodyType.Dynamic;
+            else if (_pickedObject.BodyType == BodyType.Dynamic) _pickedObject.BodyType = BodyType.Static;
+
         }
     }
 
@@ -174,7 +180,7 @@ public class MainWindow
 
             DrawQuickSpawnMenu(_contextMenuWorldPos);
 
-            if (_heldObject is not null)
+            if (_pickedObject is not null)
             {
                 if (ImGui.MenuItem("Delete"))
                 {
@@ -243,7 +249,7 @@ public class MainWindow
 
     private void DebugScaling()
     {
-        if (_heldObject is CirclePhysicsObject circle)
+        if (_pickedObject is CirclePhysicsObject circle)
         {
             if (Raylib.IsKeyDown(KeyboardKey.H))
                 circle.Radius += 0.01f;
@@ -295,10 +301,10 @@ public class MainWindow
         Vector2 mouseWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
         Fixture fixture = _world.TestPoint(mouseWorld);
 
-        if (fixture == null || fixture.Body.BodyType != BodyType.Dynamic)
+        if (fixture == null)
             return;
 
-        _heldObject = fixture.Tag as PhysicsObject;
+        _pickedObject = fixture.Tag as PhysicsObject;
 
         _mouseJoint = new FixedMouseJoint(fixture.Body, mouseWorld)
         {
@@ -322,8 +328,14 @@ public class MainWindow
     {
         Raylib.DrawText(Raylib.GetFPS().ToString(), 10, 10, 30, Color.Magenta);
         Raylib.DrawText(Raylib.GetFrameTime().ToString(), 10, 40, 30, Color.Magenta);
-        if (_heldObject is not null)
-            Raylib.DrawText($"{_heldObject.Body.Position}", 10, 70, 30, Color.Magenta);
+        if (_pickedObject is not null)
+        {
+            Raylib.DrawText($"{_pickedObject.Body.Position}", 10, 70, 30, Color.Magenta);
+            Raylib.DrawText($"{_pickedObject.Body.BodyType} | {_pickedObject.BodyType}", 10, 100, 30, Color.Magenta);
+
+        }
+
+        Raylib.DrawText($"{_accumulator}", 10, 130, 30, Color.Magenta);
     }
 
     private void DrawPhysicsObjects()
