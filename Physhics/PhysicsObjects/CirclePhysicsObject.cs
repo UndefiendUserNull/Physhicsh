@@ -1,5 +1,7 @@
-﻿using nkast.Aether.Physics2D.Dynamics;
+﻿using ImGuiNET;
+using nkast.Aether.Physics2D.Dynamics;
 using Physhicsh.Extensions;
+using Physhicsh.UI;
 using Raylib_cs;
 
 namespace Physhicsh.PhysicsObjects;
@@ -26,5 +28,16 @@ public class CirclePhysicsObject(float x, float y, float radius, Color color, fl
         float screenRadius = Radius * Consts.PPM;
 
         Raylib.DrawCircleV(Body.Position.WorldToScreen().ToNumericsVector2(), screenRadius, Color);
+    }
+
+    public override void Properties(ImGuiUI ui)
+    {
+        base.Properties(ui);
+
+        float r = Radius;
+        if (ImGui.SliderFloat("Radius", ref r, 0f, 3f))
+        {
+            Radius = r;
+        }
     }
 }

@@ -1,7 +1,9 @@
-﻿using nkast.Aether.Physics2D.Collision.Shapes;
+﻿using ImGuiNET;
+using nkast.Aether.Physics2D.Collision.Shapes;
 using nkast.Aether.Physics2D.Common;
 using nkast.Aether.Physics2D.Dynamics;
 using Physhicsh.Extensions;
+using Physhicsh.UI;
 using Raylib_cs;
 
 namespace Physhicsh.PhysicsObjects
@@ -15,7 +17,6 @@ namespace Physhicsh.PhysicsObjects
         {
             base.Start(world);
             BuildFixture();
-
         }
 
         public override void Draw()
@@ -25,11 +26,25 @@ namespace Physhicsh.PhysicsObjects
             (_widthPx, _heightPx) = MeasurePolygon(Fixture.Shape as PolygonShape);
             Vector2 screenPos = Body.Position.WorldToScreen();
 
-            Rectangle rec = new(screenPos.X, screenPos.Y, _widthPx, _heightPx);
-            Vector2 origin = new(_widthPx / 2f, _heightPx / 2f);
-            float rotationDegrees = -Body.Rotation * (180f / MathF.PI);
+            if (Texture is Texture2D texture)
+            {
+                // Texture rect
+                Rectangle source = new(0, 0, texture.Width, texture.Height);
+                // Drawn rect
+                Rectangle dist = new(screenPos.X, screenPos.Y, _widthPx, _heightPx);
+                Vector2 origin = new(_widthPx / 2f, _heightPx / 2f);
+                float rotationDegrees = -Body.Rotation * (180f / MathF.PI);
 
-            Raylib.DrawRectanglePro(rec, origin.ToNumericsVector2(), rotationDegrees, Color);
+                Raylib.DrawTexturePro(texture, source, dist, origin.ToNumericsVector2(), rotationDegrees, Color.White);
+            }
+            else
+            {
+                Rectangle rec = new(screenPos.X, screenPos.Y, _widthPx, _heightPx);
+                Vector2 origin = new(_widthPx / 2f, _heightPx / 2f);
+                float rotationDegrees = -Body.Rotation * (180f / MathF.PI);
+
+                Raylib.DrawRectanglePro(rec, origin.ToNumericsVector2(), rotationDegrees, Color);
+            }
         }
 
         public void Resize(Vector2 newSize)
@@ -76,6 +91,16 @@ namespace Physhicsh.PhysicsObjects
             }
 
             return ((maxX - minX) * Consts.PPM, (maxY - minY) * Consts.PPM);
+        }
+        public override void Properties(ImGuiUI ui)
+        {
+            base.Properties(ui);
+
+            System.Numerics.Vector2 sizeRefSlider = Size.ToNumericsVector2();
+            if (ImGui.SliderFloat2("Size", ref sizeRefSlider, 0.001f, 20f))
+            {
+                Resize(sizeRefSlider.ToAetherVector2());
+            }
         }
     }
 }

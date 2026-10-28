@@ -18,14 +18,13 @@ public sealed class ImGuiUI(ImFontPtr font)
 
     private readonly Dictionary<string, PopupState> _popups = [];
 
-
     public FontScope UseFont() => new(_font);
 
     public void BeginFrame()
     {
         ImGuiIOPtr io = ImGui.GetIO();
 
-        ImGui.SetNextWindowPos(System.Numerics.Vector2.Zero);
+        ImGui.SetNextWindowPos(Vector2.Zero);
         ImGui.SetNextWindowSize(io.DisplaySize);
         ImGui.Begin("##ui_host",
             ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoBackground |
@@ -41,17 +40,17 @@ public sealed class ImGuiUI(ImFontPtr font)
 
     public void ShowPopup(string id, Vector2 screenPos, Action body)
     {
-        // if the popup doesn't already exist, create a new one
         if (!_popups.TryGetValue(id, out PopupState? p))
-        {
             _popups[id] = p = new PopupState { Id = id };
-        }
 
         p.ScreenPos = screenPos;
         p.Body = body;
         p.PendingOpen = true;
         p.ShouldClose = false;
     }
+
+    public void ShowPopup(string id, Vector2 screenPos, Action<MenuBuilder> build)
+        => ShowPopup(id, screenPos, () => build(new MenuBuilder()));
 
     public void ClosePopup(string id)
     {
@@ -109,23 +108,22 @@ public sealed class ImGuiUI(ImFontPtr font)
                 _popups.Remove(id);
     }
 
-    public static void Menu(string label, Action<MenuBuilder> build)
+    public void BeginMenu(string label, Action<MenuBuilder> build)
     {
         if (!ImGui.BeginMenu(label)) return;
-        build(new());
+        build(new MenuBuilder());
         ImGui.EndMenu();
     }
 
     public void BeginWindow(string label, ImGuiWindowFlags windowFlags, Action body)
     {
-        if (ImGui.Begin(label, windowFlags))
+        using (UseFont())
         {
-            using (UseFont())
+            if (ImGui.Begin(label, windowFlags))
             {
                 body();
+                ImGui.End();
             }
-            ImGui.End();
         }
     }
-
 }
