@@ -6,7 +6,7 @@ using Raylib_cs;
 
 namespace Physhicsh.PhysicsObjects;
 
-public class CirclePhysicsObject(float x, float y, float radius, Color color, float density = 1f, BodyType bodyType = BodyType.Dynamic) : PhysicsObject(x, y, color, bodyType)
+public class CirclePhysicsObject(float x, float y, float radius, Color color, float density = 0f, BodyType bodyType = BodyType.Dynamic) : PhysicsObject(x, y, color, bodyType)
 {
     public float Radius { get { return Fixture.Shape.Radius; } set { Fixture.Shape.Radius = value; } }
     public override void Start(World world)

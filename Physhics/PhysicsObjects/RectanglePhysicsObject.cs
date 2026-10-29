@@ -70,7 +70,7 @@ namespace Physhicsh.PhysicsObjects
 
         private void BuildFixture()
         {
-            Fixture = Body.CreateRectangle(Size.X, Size.Y, 1f, Vector2.Zero);
+            Fixture = Body.CreateRectangle(Size.X, Size.Y, 10f, Vector2.Zero);
             Fixture.Restitution = 0.3f;
             Fixture.Friction = 0.5f;
             Fixture.Tag = this;

@@ -1,7 +1,6 @@
 ﻿using ImGuiNET;
 using nkast.Aether.Physics2D.Common;
 using nkast.Aether.Physics2D.Dynamics;
-using nkast.Aether.Physics2D.Dynamics.Joints;
 using Physhicsh.Extensions;
 using Physhicsh.PhysicsObjects;
 using Physhicsh.UI;
@@ -18,17 +17,15 @@ public class MainWindow
     private World _world = null!;
     private float _accumulator;
     private float _gravityScale = 5f;
-    private FixedMouseJoint? _mouseJoint;
     private PhysicsObject _pickedObject = null!;
-    private Vector2 _mousePosWorld;
     private PhysicsObject? _propertiesObject;
-    private bool _showUglyDebug = false;
     private System.Numerics.Vector3 _cachedBgColor;
     private bool _hasBgCachedColor;
     private TextureLoader _textureLoader = new();
     private ImGuiUI _ui = null!;
     private Color _currentBgColor = Color.Black;
     private List<Action> _imGuiWindows => [DrawPropertiesWindow, DrawSettingsWindow];
+    private Input _input;
 
     public void Start()
     {
@@ -41,6 +38,7 @@ public class MainWindow
         rlImGui.Setup(true);
 
         _world = new World(new Vector2(0, -9.81f * _gravityScale));
+        _input = new(_world, _physicsObjects);
 
         SpawnDemoObjects();
 
@@ -106,19 +104,19 @@ public class MainWindow
 
     private void Update()
     {
-        _mousePosWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
-
         StepPhysics(Raylib.GetFrameTime());
-        DebugScaling();
-        HandleMouseInput();
-        HandleShortcuts();
+
+        _input.UpdateMouse();
+
+        _input.HandleMouseInput(_ui, _world, ref _pickedObject);
+        _input.HandleShortcuts(_ui, ref _pickedObject, DeletePhysicsObject);
+
         UpdatePhysicsObjects();
+
 
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
         {
-            Vector2 worldPos = _mousePosWorld;
-
-            PickFixture(worldPos);
+            Vector2 worldPos = _input.MousePosWorld;
 
             _ui.ShowPopup("##world_context", Raylib.GetMousePosition(), mb =>
             {
@@ -126,7 +124,7 @@ public class MainWindow
 
                 mb.Separator();
 
-                mb.SubMenu("Quick spawn", (x) => DrawQuickSpawnMenu(worldPos, x));
+                mb.SubMenu("Quick spawn", (x) => ImGuiStaticPopups.DrawQuickSpawnMenu(_world, worldPos, x, _physicsObjects));
 
                 if (_pickedObject is not null)
                 {
@@ -140,41 +138,6 @@ public class MainWindow
                 }
 
             });
-        }
-    }
-
-    private void HandleShortcuts()
-    {
-        ImGuiIOPtr io = ImGui.GetIO();
-        if (io.WantCaptureKeyboard) return;
-
-        if (Raylib.IsKeyPressedRepeat(KeyboardKey.R) || Raylib.IsKeyPressed(KeyboardKey.R)) SpawnRectangle(_mousePosWorld);
-        if (Raylib.IsKeyPressedRepeat(KeyboardKey.C) || Raylib.IsKeyPressed(KeyboardKey.C)) SpawnCircle(_mousePosWorld);
-        if (Raylib.IsKeyPressed(KeyboardKey.Tab))
-        {
-            Vector2 mousePos = _mousePosWorld;
-            _ui.ShowPopup("##quick_spawn", Raylib.GetMousePosition(), () => DrawQuickSpawnMenu(mousePos, new()));
-        }
-        if (Raylib.IsKeyPressed(KeyboardKey.V) && _pickedObject is not null)
-        {
-            if (_pickedObject.BodyType == BodyType.Static) _pickedObject.BodyType = BodyType.Dynamic;
-            else if (_pickedObject.BodyType == BodyType.Dynamic) _pickedObject.BodyType = BodyType.Static;
-
-        }
-        if (Raylib.IsKeyPressed(KeyboardKey.X) && _pickedObject is not null) DeletePhysicsObject(_pickedObject);
-        if (Raylib.IsKeyPressed(KeyboardKey.F3)) _showUglyDebug = !_showUglyDebug;
-
-        // Rotation
-
-        if (Raylib.IsKeyDown(KeyboardKey.Q) && _pickedObject is not null)
-        {
-            _pickedObject.Body.Rotation -= 0.05f;
-            _pickedObject.Body.ResetDynamics();
-        }
-        if (Raylib.IsKeyDown(KeyboardKey.E) && _pickedObject is not null)
-        {
-            _pickedObject.Body.Rotation += 0.05f;
-            _pickedObject.Body.ResetDynamics();
         }
     }
 
@@ -192,7 +155,7 @@ public class MainWindow
             window();
         }
 
-        if (_showUglyDebug)
+        if (_input.ShowDebugWindow)
             DrawDebugWindow();
 
         _ui.EndFrame();
@@ -242,17 +205,14 @@ public class MainWindow
     {
         obj.Delete();
         _physicsObjects.Remove(obj);
+
         if (_pickedObject == _propertiesObject)
             _propertiesObject = null;
         if (ReferenceEquals(_pickedObject, obj))
             _pickedObject = null!;
     }
 
-    private void DrawQuickSpawnMenu(Vector2 spawnPos, MenuBuilder mb)
-    {
-        mb.Item("Rectangle", "r", () => SpawnRectangle(spawnPos));
-        mb.Item("Circle", "c", () => SpawnCircle(spawnPos));
-    }
+
 
     private void DrawPropertiesWindow()
     {
@@ -310,97 +270,6 @@ public class MainWindow
     {
         foreach (PhysicsObject item in _physicsObjects)
             item.PhysicsUpdate(_world);
-    }
-
-    private void DebugScaling()
-    {
-        if (_pickedObject is CirclePhysicsObject circle)
-        {
-            if (Raylib.IsKeyDown(KeyboardKey.H))
-                circle.Radius += 0.01f;
-            if (Raylib.IsKeyDown(KeyboardKey.J))
-                circle.Radius -= 0.01f;
-        }
-    }
-
-    private void SpawnRectangle(Vector2 pos)
-    {
-        RectanglePhysicsObject newRect = new(
-            pos.X, pos.Y, 1, 1,
-            RandomColor(), 1);
-
-        _physicsObjects.Add(newRect);
-        newRect.Start(_world);
-    }
-
-    private void SpawnCircle(Vector2 pos)
-    {
-        CirclePhysicsObject newBall = new(
-            pos.X, pos.Y, _rng.NextFloat(0.2f, 0.5f),
-            RandomColor(), 1);
-
-        _physicsObjects.Add(newBall);
-        newBall.Start(_world);
-    }
-
-    private Color RandomColor() => new(
-        (byte)_rng.Next(0, 254),
-        (byte)_rng.Next(0, 254),
-        (byte)_rng.Next(0, 254));
-
-    private void HandleMouseInput()
-    {
-        if (_ui.AnyPopupsOpen()) return;
-
-        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-        {
-            PickFixture(_mousePosWorld);
-            BeginDrag();
-        }
-        else if (_mouseJoint != null && Raylib.IsMouseButtonDown(MouseButton.Left))
-        {
-            UpdateDrag();
-        }
-        else if (_mouseJoint != null && Raylib.IsMouseButtonReleased(MouseButton.Left))
-        {
-            EndDrag();
-        }
-    }
-
-    private Fixture? PickFixture(Vector2 mouseWorld)
-    {
-        Fixture fixture = _world.TestPoint(mouseWorld);
-
-        if (fixture != null)
-            _pickedObject = fixture.Tag as PhysicsObject;
-        else
-            _pickedObject = null;
-
-        return fixture == null ? null : fixture;
-    }
-
-    private void BeginDrag()
-    {
-        if (_pickedObject == null) return;
-
-        Vector2 mouseWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
-
-        _mouseJoint = new FixedMouseJoint(_pickedObject.Body, mouseWorld)
-        {
-            MaxForce = 1000f * _pickedObject.Body.Mass
-        };
-        _world.Add(_mouseJoint);
-    }
-
-    private void UpdateDrag()
-    {
-        _mouseJoint!.WorldAnchorB = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
-    }
-
-    private void EndDrag()
-    {
-        _world.Remove(_mouseJoint!);
-        _mouseJoint = null;
     }
 
     private void DrawDebugWindow()

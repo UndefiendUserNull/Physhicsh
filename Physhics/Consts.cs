@@ -11,6 +11,7 @@ namespace Physhicsh
         public const int MAX_SUBSTEPS = 5;
         public const float FIXED_DT = 1f / MAX_FPS;
         public const float MAX_FRAME_TIME = 0.060f;
+        public const float ROTATION_SPEED = 0.05f;
         public const string TEXTURES_PATH = "textures";
         public static Vector2 ScreenCenter => new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
