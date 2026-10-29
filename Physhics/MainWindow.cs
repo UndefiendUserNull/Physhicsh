@@ -26,6 +26,7 @@ public class MainWindow
     private Color _currentBgColor = Color.Black;
     private List<Action> _imGuiWindows => [DrawPropertiesWindow, DrawSettingsWindow];
     private Input _input;
+    private SolverIterations _solver = new();
 
     public void Start()
     {
@@ -39,7 +40,11 @@ public class MainWindow
 
         _world = new World(new Vector2(0, -9.81f * _gravityScale));
         _input = new(_world, _physicsObjects);
-
+        _solver = new()
+        {
+            VelocityIterations = 32,
+            PositionIterations = 16,
+        };
         SpawnDemoObjects();
 
         while (!Raylib.WindowShouldClose())
@@ -254,7 +259,7 @@ public class MainWindow
 
         while (_accumulator >= Consts.FIXED_DT && stepCount < Consts.MAX_SUBSTEPS)
         {
-            _world.Step(Consts.FIXED_DT);
+            _world.Step(Consts.FIXED_DT, ref _solver);
             _accumulator -= Consts.FIXED_DT;
             stepCount++;
         }

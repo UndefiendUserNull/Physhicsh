@@ -41,32 +41,47 @@ public class Input(World world, List<PhysicsObject> objs)
             Vector2 mousePos = MousePosWorld;
             ui.ShowPopup("##quick_spawn", Raylib.GetMousePosition(), () => ImGuiStaticPopups.DrawQuickSpawnMenu(_world, mousePos, new(), _physicsObjects));
         }
-        if (Raylib.IsKeyPressed(KeyboardKey.V) && pickedObject is not null)
+
+        bool isRotating = pickedObject is not null &&
+                          (Raylib.IsKeyDown(KeyboardKey.Q) || Raylib.IsKeyDown(KeyboardKey.E));
+
+        if (Raylib.IsKeyPressed(KeyboardKey.V) && pickedObject is not null && !isRotating)
         {
-            if (pickedObject.Body.BodyType == BodyType.Static) pickedObject.Body.BodyType = BodyType.Dynamic;
-            else if (pickedObject.Body.BodyType == BodyType.Dynamic) pickedObject.Body.BodyType = BodyType.Static;
+            BodyType effectiveType = _isKinematicDragging && _kinematicDragBody is not null
+                ? _prevKinematicBodyType
+                : pickedObject.Body.BodyType;
+
+            if (effectiveType == BodyType.Static)
+            {
+                if (_isKinematicDragging && _kinematicDragBody is not null)
+                    _prevKinematicBodyType = BodyType.Dynamic;
+                else
+                    pickedObject.Body.BodyType = BodyType.Dynamic;
+            }
+            else if (effectiveType == BodyType.Dynamic)
+            {
+                if (_isKinematicDragging && _kinematicDragBody is not null)
+                    _prevKinematicBodyType = BodyType.Static;
+                else
+                    pickedObject.Body.BodyType = BodyType.Static;
+            }
         }
+
         if (Raylib.IsKeyPressed(KeyboardKey.X) && pickedObject is not null) DeletePhysicsObject(pickedObject);
         if (Raylib.IsKeyPressed(KeyboardKey.F3)) ShowDebugWindow = !ShowDebugWindow;
 
         if (pickedObject is not null)
         {
+            float rotationSpeed = Raylib.IsKeyDown(KeyboardKey.LeftShift)
+                ? Consts.ROTATION_SPEED / 2f
+                : Consts.ROTATION_SPEED;
             float direction = 0f;
-            float rotationSpeed = 0f;
-            if (Raylib.IsKeyDown(KeyboardKey.LeftShift))
-            {
-                rotationSpeed = Consts.ROTATION_SPEED / 2;
-            }
-            else
-            {
-                rotationSpeed = Consts.ROTATION_SPEED;
-            }
-            if (Raylib.IsKeyDown(KeyboardKey.Q)) direction += rotationSpeed;
-            if (Raylib.IsKeyDown(KeyboardKey.E)) direction -= rotationSpeed;
+            if (Raylib.IsKeyDown(KeyboardKey.Q)) direction += 1f;
+            if (Raylib.IsKeyDown(KeyboardKey.E)) direction -= 1f;
 
             if (direction != 0f)
             {
-                pickedObject.Body.Rotation += direction * Consts.ROTATION_SPEED * 60f * dt;
+                pickedObject.Body.Rotation += direction * rotationSpeed * 60f * dt;
                 pickedObject.Body.AngularVelocity = 0f;
                 pickedObject.Body.Awake = true;
             }

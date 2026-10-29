@@ -19,6 +19,7 @@ public class PhysicsObject(float x, float y, Color color, BodyType bodyType = Bo
     public virtual void Start(World world)
     {
         Body = world.CreateBody(new(x, y), 0, bodyType);
+        //Body.IsBullet = true;
         Body.Tag = this;
     }
 
