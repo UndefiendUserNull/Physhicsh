@@ -18,6 +18,7 @@ public static class AetherVectorsExtension
         (Consts.ScreenCenter.Y - screen.Y) / Consts.PPM);
 
     public static Vector3 ToVector3(this Color c) => new(c.R, c.B, c.G);
+    public static System.Numerics.Vector4 ToVector4(this Color c) => new(c.R, c.B, c.G, c.A);
     public static Color ToColor(this Vector3 c) => new(c.X, c.Y, c.Z);
 
     public static Vector3 ToAetherVector3(this System.Numerics.Vector3 v) => new(v.X, v.Y, v.Z);

@@ -1,4 +1,5 @@
 ﻿using Raylib_cs;
+using System.Numerics;
 
 namespace Physhicsh.Extensions;
 
@@ -14,8 +15,17 @@ public static class RandomExtensions
     public static Color RandomColor(this Random rng)
     {
         return new(
-    (byte)rng.Next(0, 254),
-    (byte)rng.Next(0, 254),
-    (byte)rng.Next(0, 254));
+        (byte)rng.Next(0, 254),
+        (byte)rng.Next(0, 254),
+        (byte)rng.Next(0, 254));
+    }
+
+    public static Vector4 RandomImGuiColor(this Random rng)
+    {
+        return new(
+        rng.NextFloat(0, 1f),
+        rng.NextFloat(0, 1f),
+        rng.NextFloat(0, 1f),
+        255f);
     }
 }

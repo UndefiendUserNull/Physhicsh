@@ -203,6 +203,20 @@ public class MainWindow
                 _gravityScale = gravityRefSlider;
                 _world.Gravity = new(0, -9.81f * _gravityScale);
             }
+
+            if (ImGui.CollapsingHeader("Spawn Settings"))
+            {
+                ImGui.TextColored(_rng.RandomImGuiColor(), "TeSt");
+            }
+
+            if (ImGui.CollapsingHeader("VERY DANGEROUS !!!"))
+            {
+                ImGui.TextColored(new(255, 0, 0, 255), "All buttons here doesn't have confirmation.");
+                if (ImGui.Button("Clear All"))
+                {
+                    _physicsObjects.Clear();
+                }
+            }
         });
     }
 
@@ -303,8 +317,10 @@ public class MainWindow
 
     private void DrawPhysicsObjects()
     {
-        foreach (PhysicsObject item in _physicsObjects)
-            item.Draw();
+        foreach (PhysicsObject obj in _physicsObjects)
+        {
+            obj.Draw();
+        }
     }
 
 }
