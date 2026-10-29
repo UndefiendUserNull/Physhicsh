@@ -19,6 +19,11 @@ public class Input(World world, List<PhysicsObject> objs)
     public FixedMouseJoint? MouseJoint { get; private set; }
     private bool _isRotating = false;
     private BodyType _prevRotatingBodyType;
+    private Body? _kinematicDragBody;
+    private BodyType _prevKinematicBodyType;
+    private Vector2 _prevKinematicLinearVelocity;
+    private bool _isKinematicDragging;
+
     public void UpdateMouse()
     {
         MousePosWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
@@ -38,8 +43,8 @@ public class Input(World world, List<PhysicsObject> objs)
         }
         if (Raylib.IsKeyPressed(KeyboardKey.V) && pickedObject is not null)
         {
-            if (pickedObject.BodyType == BodyType.Static) pickedObject.BodyType = BodyType.Dynamic;
-            else if (pickedObject.BodyType == BodyType.Dynamic) pickedObject.BodyType = BodyType.Static;
+            if (pickedObject.Body.BodyType == BodyType.Static) pickedObject.Body.BodyType = BodyType.Dynamic;
+            else if (pickedObject.Body.BodyType == BodyType.Dynamic) pickedObject.Body.BodyType = BodyType.Static;
 
         }
         if (Raylib.IsKeyPressed(KeyboardKey.X) && pickedObject is not null) DeletePhysicsObject(pickedObject);
@@ -47,11 +52,10 @@ public class Input(World world, List<PhysicsObject> objs)
 
         // Rotation
 
-        if ((Raylib.IsKeyDown(KeyboardKey.Q) || Raylib.IsKeyDown(KeyboardKey.E)) && pickedObject is not null)
+        if ((Raylib.IsKeyDown(KeyboardKey.Q) || Raylib.IsKeyDown(KeyboardKey.E)) && pickedObject is not null && !_isKinematicDragging)
         {
             _isRotating = true;
             _prevRotatingBodyType = pickedObject.Body.BodyType;
-            //pickedObject.Body.ResetDynamics();
             pickedObject.Body.BodyType = BodyType.Static;
         }
         else if (_isRotating && !Raylib.IsMouseButtonDown(MouseButton.Left) && pickedObject is not null)
@@ -91,7 +95,7 @@ public class Input(World world, List<PhysicsObject> objs)
     {
         if (ui.AnyPopupsOpen() || ImGui.GetIO().WantCaptureMouse)
         {
-            if (MouseJoint != null)
+            if (MouseJoint != null || _isKinematicDragging)
                 EndDrag(world);
 
             return;
@@ -102,11 +106,11 @@ public class Input(World world, List<PhysicsObject> objs)
             AetherUtils.PickFixture(world, MousePosWorld, ref pickedObject);
             BeginDrag(world, ref pickedObject);
         }
-        else if (MouseJoint != null && _isRotating == false && Raylib.IsMouseButtonDown(MouseButton.Left))
+        else if ((MouseJoint != null || _isKinematicDragging) && _isRotating == false && Raylib.IsMouseButtonDown(MouseButton.Left))
         {
-            UpdateDrag();
+            UpdateDrag(ref pickedObject);
         }
-        else if (MouseJoint != null && Raylib.IsMouseButtonReleased(MouseButton.Left))
+        else if ((MouseJoint != null || _isKinematicDragging) && Raylib.IsMouseButtonReleased(MouseButton.Left))
         {
             EndDrag(world);
         }
@@ -116,25 +120,64 @@ public class Input(World world, List<PhysicsObject> objs)
     {
         if (pickedObject == null) return;
 
-        Vector2 mouseWorld = MousePosWorld;
+        Body body = pickedObject.Body;
 
-        MouseJoint = new FixedMouseJoint(pickedObject.Body, mouseWorld)
+        if (body.BodyType != BodyType.Dynamic)
         {
-            MaxForce = 100000f,
-        };
-        world.Add(MouseJoint);
+            _kinematicDragBody = body;
+            _prevKinematicBodyType = body.BodyType;
+            _prevKinematicLinearVelocity = body.LinearVelocity;
+            body.BodyType = BodyType.Kinematic;
+            body.Enabled = true;
+            body.Awake = true;
+            _isKinematicDragging = true;
+        }
+        else
+        {
+            MouseJoint = new FixedMouseJoint(body, MousePosWorld)
+            {
+                MaxForce = 100000f,
+                Frequency = 10.0f,
+            };
+
+            world.Add(MouseJoint);
+        }
     }
 
-    public void UpdateDrag()
+    public void UpdateDrag(ref PhysicsObject? pickedObject)
     {
-        MouseJoint!.WorldAnchorB = MousePosWorld;
+        if (_isKinematicDragging && _kinematicDragBody != null)
+        {
+            const float stiffness = 20.0f;
+            const float maxSpeed = 50.0f;
+
+            Vector2 desiredVelocity = (MousePosWorld - _kinematicDragBody.Position) * stiffness;
+            if (desiredVelocity.LengthSquared() > maxSpeed * maxSpeed)
+                (desiredVelocity *= maxSpeed).Normalize();
+
+            _kinematicDragBody.LinearVelocity = desiredVelocity;
+            _kinematicDragBody.Awake = true;
+        }
+        else if (MouseJoint != null)
+        {
+            MouseJoint.WorldAnchorB = MousePosWorld;
+        }
     }
 
     public void EndDrag(World world)
     {
         if (MouseJoint is not null)
+        {
             world.Remove(MouseJoint);
+            MouseJoint = null;
+        }
 
-        MouseJoint = null;
+        if (_isKinematicDragging && _kinematicDragBody != null)
+        {
+            _kinematicDragBody.LinearVelocity = _prevKinematicLinearVelocity;
+            _kinematicDragBody.BodyType = _prevKinematicBodyType;
+            _kinematicDragBody = null;
+            _isKinematicDragging = false;
+        }
     }
 }
