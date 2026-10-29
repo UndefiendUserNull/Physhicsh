@@ -17,8 +17,6 @@ public class Input(World world, List<PhysicsObject> objs)
     public bool ShowDebugWindow { get; set; } = false;
     public Vector2 MousePosWorld { get; private set; } = new();
     public FixedMouseJoint? MouseJoint { get; private set; }
-    private bool _isRotating = false;
-    private BodyType _prevRotatingBodyType;
     private Body? _kinematicDragBody;
     private BodyType _prevKinematicBodyType;
     private Vector2 _prevKinematicLinearVelocity;
@@ -34,6 +32,8 @@ public class Input(World world, List<PhysicsObject> objs)
         ImGuiIOPtr io = ImGui.GetIO();
         if (io.WantCaptureKeyboard) return;
 
+        float dt = Raylib.GetFrameTime();
+
         if (Raylib.IsKeyPressedRepeat(KeyboardKey.R) || Raylib.IsKeyPressed(KeyboardKey.R)) Spawn.SpawnRectangle(_world, MousePosWorld, _physicsObjects);
         if (Raylib.IsKeyPressedRepeat(KeyboardKey.C) || Raylib.IsKeyPressed(KeyboardKey.C)) Spawn.SpawnCircle(_world, MousePosWorld, _physicsObjects);
         if (Raylib.IsKeyPressed(KeyboardKey.Tab))
@@ -45,41 +45,31 @@ public class Input(World world, List<PhysicsObject> objs)
         {
             if (pickedObject.Body.BodyType == BodyType.Static) pickedObject.Body.BodyType = BodyType.Dynamic;
             else if (pickedObject.Body.BodyType == BodyType.Dynamic) pickedObject.Body.BodyType = BodyType.Static;
-
         }
         if (Raylib.IsKeyPressed(KeyboardKey.X) && pickedObject is not null) DeletePhysicsObject(pickedObject);
         if (Raylib.IsKeyPressed(KeyboardKey.F3)) ShowDebugWindow = !ShowDebugWindow;
 
-        // Rotation
-
-        if ((Raylib.IsKeyDown(KeyboardKey.Q) || Raylib.IsKeyDown(KeyboardKey.E)) && pickedObject is not null && !_isKinematicDragging)
+        if (pickedObject is not null)
         {
-            _isRotating = true;
-            _prevRotatingBodyType = pickedObject.Body.BodyType;
-            pickedObject.Body.BodyType = BodyType.Static;
-        }
-        else if (_isRotating && !Raylib.IsMouseButtonDown(MouseButton.Left) && pickedObject is not null)
-        {
-            pickedObject.Body.BodyType = _prevRotatingBodyType;
-            _isRotating = false;
-        }
-
-        if (_isRotating && pickedObject is not null)
-        {
-            pickedObject.Body.Enabled = false;
-            if (Raylib.IsKeyDown(KeyboardKey.Q))
+            float direction = 0f;
+            float rotationSpeed = 0f;
+            if (Raylib.IsKeyDown(KeyboardKey.LeftShift))
             {
-                pickedObject.Body.Rotation += -Consts.ROTATION_SPEED;
+                rotationSpeed = Consts.ROTATION_SPEED / 2;
             }
-            if (Raylib.IsKeyDown(KeyboardKey.E))
+            else
             {
-                pickedObject.Body.Rotation += Consts.ROTATION_SPEED;
+                rotationSpeed = Consts.ROTATION_SPEED;
             }
-        }
-        else if (!_isRotating && pickedObject is not null)
-        {
-            pickedObject.Body.Enabled = true;
+            if (Raylib.IsKeyDown(KeyboardKey.Q)) direction += rotationSpeed;
+            if (Raylib.IsKeyDown(KeyboardKey.E)) direction -= rotationSpeed;
 
+            if (direction != 0f)
+            {
+                pickedObject.Body.Rotation += direction * Consts.ROTATION_SPEED * 60f * dt;
+                pickedObject.Body.AngularVelocity = 0f;
+                pickedObject.Body.Awake = true;
+            }
         }
 
         if (pickedObject is CirclePhysicsObject circle)
@@ -106,7 +96,7 @@ public class Input(World world, List<PhysicsObject> objs)
             AetherUtils.PickFixture(world, MousePosWorld, ref pickedObject);
             BeginDrag(world, ref pickedObject);
         }
-        else if ((MouseJoint != null || _isKinematicDragging) && _isRotating == false && Raylib.IsMouseButtonDown(MouseButton.Left))
+        else if ((MouseJoint != null || _isKinematicDragging) && Raylib.IsMouseButtonDown(MouseButton.Left))
         {
             UpdateDrag(ref pickedObject);
         }
