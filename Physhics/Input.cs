@@ -21,7 +21,7 @@ public class Input(World world, List<PhysicsObject> objs)
     private BodyType _prevKinematicBodyType;
     private Vector2 _prevKinematicLinearVelocity;
     private bool _isKinematicDragging;
-
+    private bool _angularWasResetOnce = false;
     public void UpdateMouse()
     {
         MousePosWorld = Raylib.GetMousePosition().ToAetherVector2().ScreenToWorld();
@@ -77,17 +77,26 @@ public class Input(World world, List<PhysicsObject> objs)
                 : Consts.ROTATION_SPEED;
 
             float direction = 0f;
-            if (Raylib.IsKeyDown(KeyboardKey.Q)) direction += 1f;
-            if (Raylib.IsKeyDown(KeyboardKey.E)) direction -= 1f;
 
-            if (direction != 0f)
+            if (Raylib.IsKeyDown(KeyboardKey.Q)) direction = 1;
+            else if (Raylib.IsKeyDown(KeyboardKey.E)) direction = -1;
+            else direction = 0f;
+
+            if (Raylib.IsKeyDown(KeyboardKey.Q) || Raylib.IsKeyDown(KeyboardKey.E))
             {
+                _angularWasResetOnce = false;
                 pickedObject.Body.IsBullet = true;
                 pickedObject.Body.AngularVelocity = direction * rotationSpeed;
                 pickedObject.Body.Awake = true;
             }
             else
             {
+                if (!_angularWasResetOnce)
+                {
+                    pickedObject.Body.AngularVelocity = 0f;
+                    _angularWasResetOnce = true;
+                }
+
                 pickedObject.Body.IsBullet = false;
             }
         }
