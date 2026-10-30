@@ -156,7 +156,7 @@ public class Input(World world, List<PhysicsObject> objs)
         {
             MouseJoint = new FixedMouseJoint(body, MousePosWorld)
             {
-                MaxForce = 100000f,
+                MaxForce = 10000f,
                 Frequency = 10.0f,
             };
 
@@ -168,7 +168,7 @@ public class Input(World world, List<PhysicsObject> objs)
     {
         if (_isKinematicDragging && _kinematicDragBody != null)
         {
-            const float stiffness = 20.0f;
+            const float stiffness = 10.0f;
             const float maxSpeed = 50.0f;
 
             Vector2 desiredVelocity = (MousePosWorld - _kinematicDragBody.Position) * stiffness;
