@@ -120,16 +120,17 @@ public class Input(World world, List<PhysicsObject> objs)
             return;
         }
 
-        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left) || Raylib.IsMouseButtonPressed(MouseButton.Right))
         {
             AetherUtils.PickFixture(world, MousePosWorld, ref pickedObject);
-            BeginDrag(world, ref pickedObject);
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+                BeginDrag(world, ref pickedObject);
         }
         else if ((MouseJoint != null || _isKinematicDragging) && Raylib.IsMouseButtonDown(MouseButton.Left))
         {
             UpdateDrag(ref pickedObject);
         }
-        else if ((MouseJoint != null || _isKinematicDragging) && Raylib.IsMouseButtonReleased(MouseButton.Left))
+        else if ((MouseJoint != null || _isKinematicDragging) && (Raylib.IsMouseButtonReleased(MouseButton.Left)))
         {
             EndDrag(world);
         }
