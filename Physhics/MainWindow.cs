@@ -6,6 +6,7 @@ using Physhicsh.PhysicsObjects;
 using Physhicsh.UI;
 using Raylib_cs;
 using rlImGui_cs;
+using System.Diagnostics;
 
 namespace Physhicsh;
 
@@ -24,13 +25,22 @@ public class MainWindow
     private TextureLoader _textureLoader = new();
     private ImGuiUI _ui = null!;
     private Color _currentBgColor = Color.Black;
-    private List<Action> _imGuiWindows => [DrawPropertiesWindow, DrawSettingsWindow];
+    private List<Action> _imGuiWindows = [];
     private Input _input;
     private SolverIterations _solver = new();
     private readonly HashSet<Timer> _timers = [];
+    private Stopwatch _sw;
+    private double _physicsTime;
+    private double _inputTime;
+    private double _updateObjTime;
+
     public void Start()
     {
+        _sw = Stopwatch.StartNew();
+        _imGuiWindows = [DrawPropertiesWindow, DrawSettingsWindow];
+
         Raylib.InitWindow(Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT, "Physhicsh");
+        Raylib.SetConfigFlags(ConfigFlags.VSyncHint);
         Raylib.SetWindowFocused();
         Raylib.SetTargetFPS(Consts.MAX_FPS);
 
@@ -39,11 +49,15 @@ public class MainWindow
         rlImGui.Setup(true);
 
         _world = new World(new Vector2(0, -9.81f * _gravityScale));
+
+        _world.ContactManager.VelocityConstraintsMultithreadThreshold = 128;
+        _world.ContactManager.PositionConstraintsMultithreadThreshold = 128;
+
         _input = new(_world, _physicsObjects);
         _solver = new()
         {
-            VelocityIterations = 32,
-            PositionIterations = 16,
+            VelocityIterations = 8,
+            PositionIterations = 8,
         };
         SpawnDemoObjects();
 
@@ -109,14 +123,19 @@ public class MainWindow
 
     private void Update()
     {
+        _sw.Restart();
         StepPhysics(Raylib.GetFrameTime());
+        _physicsTime = _sw.Elapsed.TotalMilliseconds;
 
+        _sw.Restart();
         _input.UpdateMouse();
-
         _input.HandleMouseInput(_ui, _world, ref _pickedObject);
         _input.HandleShortcuts(_ui, ref _pickedObject, DeletePhysicsObject);
+        _inputTime = _sw.Elapsed.TotalMilliseconds;
 
+        _sw.Restart();
         UpdatePhysicsObjects();
+        _updateObjTime = _sw.Elapsed.TotalMilliseconds;
 
 
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
@@ -299,6 +318,7 @@ public class MainWindow
             ImGui.Text($"Frametime: {Raylib.GetFrameTime().ToString()}");
             ImGui.Text($"Accumulator: {_accumulator}");
             ImGui.Text($"Count: {_physicsObjects.Count}");
+            ImGui.Text($"Physics: {_physicsTime}ms, Update: {_updateObjTime}ms, Input: {_inputTime}ms");
             ImGui.Separator();
 
             if (_pickedObject is not null)
