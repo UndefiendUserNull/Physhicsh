@@ -20,8 +20,6 @@ public class MainWindow
     private float _gravityScale = 5f;
     private PhysicsObject _pickedObject = null!;
     private PhysicsObject? _propertiesObject;
-    private System.Numerics.Vector3 _cachedBgColor;
-    private bool _hasBgCachedColor;
     private TextureLoader _textureLoader = new();
     private ImGuiUI _ui = null!;
     private Color _currentBgColor = Color.Black;
@@ -203,16 +201,11 @@ public class MainWindow
                 return;
             }
 
-            Color currentBgColor = _currentBgColor;
-            if (!_hasBgCachedColor || currentBgColor != _cachedBgColor.ToAetherVector3().ToColor())
-            {
-                _cachedBgColor = currentBgColor.ToVector3().ToNumericsVector3() / 255f;
-                _hasBgCachedColor = true;
-            }
+            System.Numerics.Vector3 currentBgColor = _currentBgColor.ToSysVector3();
 
-            if (ImGui.ColorEdit3("Background Color", ref _cachedBgColor))
+            if (ImGui.ColorEdit3("Background Color", ref currentBgColor))
             {
-                _currentBgColor = _cachedBgColor.ToAetherVector3().ToColor();
+                _currentBgColor = currentBgColor.ToColor();
             }
 
             int gravityRefSlider = (int)_gravityScale;
@@ -224,6 +217,8 @@ public class MainWindow
             }
 
             System.Numerics.Vector2 circlesRadiusRefSlider = SpawnRules.Instance.CirclesRadius;
+            bool useRandomColorsRefBool = SpawnRules.Instance.UseRandomColors;
+            System.Numerics.Vector3 spawnColorRefColor = SpawnRules.Instance.SpawnColor.ToSysVector3();
 
             if (ImGui.CollapsingHeader("Spawn Settings"))
             {
@@ -231,6 +226,16 @@ public class MainWindow
                 {
                     SpawnRules.Instance.CirclesRadius = circlesRadiusRefSlider;
                 }
+
+                if (ImGui.Checkbox("Random Colors", ref useRandomColorsRefBool))
+                {
+                    SpawnRules.Instance.UseRandomColors = useRandomColorsRefBool;
+                }
+                if (!SpawnRules.Instance.UseRandomColors && ImGui.ColorEdit3("Spawn Color", ref spawnColorRefColor))
+                {
+                    SpawnRules.Instance.SpawnColor = spawnColorRefColor.ToAetherVector3().ToColor();
+                }
+
             }
 
             if (ImGui.CollapsingHeader("VERY DANGEROUS !!!"))

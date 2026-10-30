@@ -17,10 +17,36 @@ public static class AetherVectorsExtension
         (screen.X - Consts.ScreenCenter.X) / Consts.PPM,
         (Consts.ScreenCenter.Y - screen.Y) / Consts.PPM);
 
-    public static Vector3 ToVector3(this Color c) => new(c.R, c.B, c.G);
-    public static System.Numerics.Vector4 ToVector4(this Color c) => new(c.R, c.B, c.G, c.A);
-    public static Color ToColor(this Vector3 c) => new(c.X, c.Y, c.Z);
+    public static Vector3 ToVector3(this Color c) =>
+        new(c.R / 255f, c.G / 255f, c.B / 255f);
 
-    public static Vector3 ToAetherVector3(this System.Numerics.Vector3 v) => new(v.X, v.Y, v.Z);
-    public static System.Numerics.Vector3 ToNumericsVector3(this Vector3 v) => new(v.X, v.Y, v.Z);
+    public static System.Numerics.Vector3 ToSysVector3(this Color c) =>
+        new(c.R / 255f, c.G / 255f, c.B / 255f);
+
+    public static System.Numerics.Vector4 ToVector4(this Color c) =>
+        new(c.R / 255f, c.G / 255f, c.B / 255f, c.A / 255f);
+
+    public static Color ToColor(this Vector3 c) => new(
+        (byte)(c.X * 255f),
+        (byte)(c.Y * 255f),
+        (byte)(c.Z * 255f),
+        (byte)255);
+
+    public static Color ToColor(this System.Numerics.Vector3 c) => new(
+        (byte)(c.X * 255f),
+        (byte)(c.Y * 255f),
+        (byte)(c.Z * 255f),
+        (byte)255);
+
+    public static Color ToColor(this System.Numerics.Vector4 c) => new(
+        (byte)(c.X * 255f),
+        (byte)(c.Y * 255f),
+        (byte)(c.Z * 255f),
+        (byte)(c.W * 255f));
+
+    public static Vector3 ToAetherVector3(this System.Numerics.Vector3 v) =>
+        new(v.X, v.Y, v.Z);
+
+    public static System.Numerics.Vector3 ToNumericsVector3(this Vector3 v) =>
+        new(v.X, v.Y, v.Z);
 }
