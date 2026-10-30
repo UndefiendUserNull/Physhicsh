@@ -11,10 +11,15 @@ public sealed class SpawnRules
     public SysVec2 CirclesRadius
     {
         get { return _circlesRadius; }
-        set => _circlesRadius = new(MathF.Min(value.X, value.Y), MathF.Max(value.X, value.Y));
+        set => _circlesRadius = MinMax(value);
     }
+    public SysVec2 RectSize { get; set; } = new(1f, 1f);
     public bool UseRandomColors = true;
     public Color SpawnColor = Color.White;
+    private static SysVec2 MinMax(SysVec2 value)
+    {
+        return new(MathF.Min(value.X, value.Y), MathF.Max(value.X, value.Y));
+    }
     private SpawnRules()
     {
 

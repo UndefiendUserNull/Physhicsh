@@ -10,7 +10,7 @@ public static class Spawn
     public static void SpawnRectangle(World world, Vector2 pos, List<PhysicsObject>? list = null)
     {
         RectanglePhysicsObject newRect = new(
-            pos.X, pos.Y, 1, 1,
+            pos.X, pos.Y, SpawnRules.Instance.RectSize.X, SpawnRules.Instance.RectSize.Y,
             SpawnRules.Instance.UseRandomColors ? Random.Shared.RandomColor() : SpawnRules.Instance.SpawnColor, 1);
 
         list?.Add(newRect);

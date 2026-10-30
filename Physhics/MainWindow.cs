@@ -216,21 +216,28 @@ public class MainWindow
                 _world.Gravity = new(0, -9.81f * _gravityScale);
             }
 
-            System.Numerics.Vector2 circlesRadiusRefSlider = SpawnRules.Instance.CirclesRadius;
-            bool useRandomColorsRefBool = SpawnRules.Instance.UseRandomColors;
-            System.Numerics.Vector3 spawnColorRefColor = SpawnRules.Instance.SpawnColor.ToSysVector3();
-
             if (ImGui.CollapsingHeader("Spawn Settings"))
             {
+                System.Numerics.Vector2 circlesRadiusRefSlider = SpawnRules.Instance.CirclesRadius;
+                System.Numerics.Vector2 rectanglesSizeRefSlider = SpawnRules.Instance.RectSize;
+                bool useRandomColorsRefBool = SpawnRules.Instance.UseRandomColors;
+                System.Numerics.Vector3 spawnColorRefColor = SpawnRules.Instance.SpawnColor.ToSysVector3();
+
                 if (ImGui.SliderFloat2("Circles radius", ref circlesRadiusRefSlider, 0.01f, 2f))
                 {
                     SpawnRules.Instance.CirclesRadius = circlesRadiusRefSlider;
+                }
+
+                if (ImGui.SliderFloat2("Rectangles size", ref rectanglesSizeRefSlider, 0.1f, 5f))
+                {
+                    SpawnRules.Instance.RectSize = rectanglesSizeRefSlider;
                 }
 
                 if (ImGui.Checkbox("Random Colors", ref useRandomColorsRefBool))
                 {
                     SpawnRules.Instance.UseRandomColors = useRandomColorsRefBool;
                 }
+
                 if (!SpawnRules.Instance.UseRandomColors && ImGui.ColorEdit3("Spawn Color", ref spawnColorRefColor))
                 {
                     SpawnRules.Instance.SpawnColor = spawnColorRefColor.ToAetherVector3().ToColor();
