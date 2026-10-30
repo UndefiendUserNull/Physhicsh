@@ -99,8 +99,6 @@ public class Input(World world, List<PhysicsObject> objs)
                     pickedObject.Body.AngularVelocity = 0f;
                     _angularWasResetOnce = true;
                 }
-
-                pickedObject.Body.IsBullet = false;
             }
         }
 
@@ -118,7 +116,7 @@ public class Input(World world, List<PhysicsObject> objs)
         if (ui.AnyPopupsOpen() || ImGui.GetIO().WantCaptureMouse)
         {
             if (MouseJoint != null || _isKinematicDragging)
-                EndDrag(world);
+                EndDrag(world, ref pickedObject);
 
             return;
         }
@@ -131,11 +129,11 @@ public class Input(World world, List<PhysicsObject> objs)
         }
         else if ((MouseJoint != null || _isKinematicDragging) && Raylib.IsMouseButtonDown(MouseButton.Left))
         {
-            UpdateDrag(ref pickedObject);
+            UpdateDrag();
         }
         else if ((MouseJoint != null || _isKinematicDragging) && (Raylib.IsMouseButtonReleased(MouseButton.Left)))
         {
-            EndDrag(world);
+            EndDrag(world, ref pickedObject);
         }
     }
 
@@ -145,6 +143,7 @@ public class Input(World world, List<PhysicsObject> objs)
         if (pickedObject.Locked) return;
 
         Body body = pickedObject.Body;
+        body.IsBullet = true;
 
         if (body.BodyType != BodyType.Dynamic)
         {
@@ -168,7 +167,7 @@ public class Input(World world, List<PhysicsObject> objs)
         }
     }
 
-    public void UpdateDrag(ref PhysicsObject? pickedObject)
+    public void UpdateDrag()
     {
         if (_isKinematicDragging && _kinematicDragBody != null)
         {
@@ -188,7 +187,7 @@ public class Input(World world, List<PhysicsObject> objs)
         }
     }
 
-    public void EndDrag(World world)
+    public void EndDrag(World world, ref PhysicsObject picked)
     {
         if (MouseJoint is not null)
         {

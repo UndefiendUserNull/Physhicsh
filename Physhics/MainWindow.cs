@@ -348,6 +348,7 @@ public class MainWindow
                 ImGui.Text($"Picked: {_pickedObject}");
                 ImGui.Text($"Holding Position: {_pickedObject.Body.Position}");
                 ImGui.Text($"BodyType: {_pickedObject.Body.BodyType}");
+                ImGui.Text($"IsBullet: {_pickedObject.Body.IsBullet}");
             }
 
             if (_propertiesObject is not null)

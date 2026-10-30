@@ -10,6 +10,11 @@ public static class AetherUtils
     {
         Fixture fixture = world.TestPoint(mouseWorld);
 
+        if (pickedObject != null)
+        {
+            pickedObject.Body.IsBullet = false;
+        }
+
         if (fixture != null)
             pickedObject = fixture.Tag as PhysicsObject;
         else
