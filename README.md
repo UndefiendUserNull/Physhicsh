@@ -1,4 +1,4 @@
-# Physhicsh | ڤيچيكش
+# ![icon](/docs/ico.bmp) Physhicsh | ڤيچيكش
 
 > [!WARNING]  
 > Under development. Expect crashes.
@@ -7,7 +7,7 @@
 ![sc2](/docs/screenshot2.jpg)
 ![sc3](/docs/screenshot3.jpg)
 
-## Controls
+## Controls ![icon](/docs/ico2.bmp)
 
 ### Main:
 
