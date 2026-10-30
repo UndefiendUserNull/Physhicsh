@@ -6,7 +6,7 @@ using Raylib_cs;
 
 namespace Physhicsh.PhysicsObjects;
 
-public class PhysicsObject(float x, float y, Color color, BodyType bodyType = BodyType.Dynamic)
+public class PhysicsObject(float x, float y, Color color, BodyType bodyType = BodyType.Dynamic, bool locked = false)
 {
     public Body Body = null!;
     public Color Color = color;
@@ -14,7 +14,7 @@ public class PhysicsObject(float x, float y, Color color, BodyType bodyType = Bo
     public Texture2D? Texture;
     private bool _hasPropCachedColor;
     private System.Numerics.Vector3 _cachedPropColor;
-
+    public bool Locked = locked;
     private readonly TextureLoader _texLoader = new();
     public virtual void Start(World world)
     {
@@ -72,6 +72,12 @@ public class PhysicsObject(float x, float y, Color color, BodyType bodyType = Bo
         if (ImGui.SliderFloat("Slippiness", ref slippy, 0f, 2f))
         {
             Fixture.Friction = slippy;
+        }
+
+        bool lockedRef = Locked;
+        if (ImGui.Checkbox("Lock", ref lockedRef))
+        {
+            Locked = lockedRef;
         }
 
         //if (ImGui.Button("Set texture"))

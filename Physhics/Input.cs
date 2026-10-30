@@ -139,6 +139,7 @@ public class Input(World world, List<PhysicsObject> objs)
     public void BeginDrag(World world, ref PhysicsObject? pickedObject)
     {
         if (pickedObject == null) return;
+        if (pickedObject.Locked) return;
 
         Body body = pickedObject.Body;
 
