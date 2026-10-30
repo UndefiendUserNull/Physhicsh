@@ -7,7 +7,7 @@
 ![sc2](/docs/screenshot2.jpg)
 ![sc3](/docs/screenshot3.jpg)
 
-## Controls ![icon](/docs/ico2.bmp)
+## ![icon](/docs/ico2.bmp) Controls
 
 ### Main:
 
