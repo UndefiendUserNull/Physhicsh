@@ -27,7 +27,7 @@ public class MainWindow
     private List<Action> _imGuiWindows => [DrawPropertiesWindow, DrawSettingsWindow];
     private Input _input;
     private SolverIterations _solver = new();
-
+    private readonly HashSet<Timer> _timers = [];
     public void Start()
     {
         Raylib.InitWindow(Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT, "Physhicsh");

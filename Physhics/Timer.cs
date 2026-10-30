@@ -44,4 +44,12 @@ public class Timer(float interval, Action? OnEnd, bool loop = false)
         if (IsFinished) return;
         IsRunning = true;
     }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is Timer t)
+            return t._interval == _interval;
+
+        return base.Equals(obj);
+    }
 }

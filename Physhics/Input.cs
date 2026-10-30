@@ -75,15 +75,20 @@ public class Input(World world, List<PhysicsObject> objs)
             float rotationSpeed = Raylib.IsKeyDown(KeyboardKey.LeftShift)
                 ? Consts.ROTATION_SPEED / 2f
                 : Consts.ROTATION_SPEED;
+
             float direction = 0f;
             if (Raylib.IsKeyDown(KeyboardKey.Q)) direction += 1f;
             if (Raylib.IsKeyDown(KeyboardKey.E)) direction -= 1f;
 
             if (direction != 0f)
             {
-                pickedObject.Body.Rotation += direction * rotationSpeed * 60f * dt;
-                pickedObject.Body.AngularVelocity = 0f;
+                pickedObject.Body.IsBullet = true;
+                pickedObject.Body.AngularVelocity = direction * rotationSpeed;
                 pickedObject.Body.Awake = true;
+            }
+            else
+            {
+                pickedObject.Body.IsBullet = false;
             }
         }
 
