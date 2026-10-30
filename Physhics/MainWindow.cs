@@ -223,9 +223,14 @@ public class MainWindow
                 _world.Gravity = new(0, -9.81f * _gravityScale);
             }
 
+            System.Numerics.Vector2 circlesRadiusRefSlider = SpawnRules.Instance.CirclesRadius;
+
             if (ImGui.CollapsingHeader("Spawn Settings"))
             {
-                ImGui.TextColored(_rng.RandomImGuiColor(), "TeSt");
+                if (ImGui.SliderFloat2("Circles radius", ref circlesRadiusRefSlider, 0.01f, 2f))
+                {
+                    SpawnRules.Instance.CirclesRadius = circlesRadiusRefSlider;
+                }
             }
 
             if (ImGui.CollapsingHeader("VERY DANGEROUS !!!"))
