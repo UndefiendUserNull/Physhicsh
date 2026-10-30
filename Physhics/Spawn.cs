@@ -11,7 +11,7 @@ public static class Spawn
     {
         RectanglePhysicsObject newRect = new(
             pos.X, pos.Y, 1, 1,
-            Random.Shared.RandomColor(), 1);
+            SpawnRules.Instance.UseRandomColors ? Random.Shared.RandomColor() : SpawnRules.Instance.SpawnColor, 1);
 
         list?.Add(newRect);
         newRect.Start(world);
@@ -21,7 +21,7 @@ public static class Spawn
     {
         CirclePhysicsObject newBall = new(
             pos.X, pos.Y, Random.Shared.NextFloat(SpawnRules.Instance.CirclesRadius.X, SpawnRules.Instance.CirclesRadius.Y),
-            Random.Shared.RandomColor(), 1);
+            SpawnRules.Instance.UseRandomColors ? Random.Shared.RandomColor() : SpawnRules.Instance.SpawnColor, 1);
 
         list?.Add(newBall);
         newBall.Start(world);
