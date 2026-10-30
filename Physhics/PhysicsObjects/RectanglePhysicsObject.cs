@@ -90,7 +90,7 @@ namespace Physhicsh.PhysicsObjects
                 maxY = MathF.Max(maxY, v.Y);
             }
 
-            return ((maxX - minX) * Consts.PPM, (maxY - minY) * Consts.PPM);
+            return ((maxX - minX) * Config.Instance.PPM, (maxY - minY) * Config.Instance.PPM);
         }
         public override void Properties(ImGuiUI ui)
         {

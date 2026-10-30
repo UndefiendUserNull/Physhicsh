@@ -73,8 +73,8 @@ public class Input(World world, List<PhysicsObject> objs)
         if (pickedObject is not null)
         {
             float rotationSpeed = Raylib.IsKeyDown(KeyboardKey.LeftShift)
-                ? Consts.ROTATION_SPEED / 2f
-                : Consts.ROTATION_SPEED;
+                ? Config.Instance.ROTATION_SPEED / 2f
+                : Config.Instance.ROTATION_SPEED;
 
             float direction = 0f;
 

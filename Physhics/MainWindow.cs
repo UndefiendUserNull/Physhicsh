@@ -37,10 +37,10 @@ public class MainWindow
         _sw = Stopwatch.StartNew();
         _imGuiWindows = [DrawPropertiesWindow, DrawSettingsWindow];
 
-        Raylib.InitWindow(Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT, "Physhicsh");
+        Raylib.InitWindow(Config.Instance.SCREEN_WIDTH, Config.Instance.SCREEN_HEIGHT, "Physhicsh");
         Raylib.SetConfigFlags(ConfigFlags.VSyncHint);
         Raylib.SetWindowFocused();
-        Raylib.SetTargetFPS(Consts.MAX_FPS);
+        Raylib.SetTargetFPS(Config.Instance.MAX_FPS);
 
         LoadFont();
 
@@ -302,20 +302,20 @@ public class MainWindow
 
     private void StepPhysics(float frameTime)
     {
-        frameTime = Math.Min(frameTime, Consts.MAX_FRAME_TIME);
+        frameTime = Math.Min(frameTime, Config.Instance.MAX_FRAME_TIME);
         _accumulator += frameTime;
 
         int stepCount = 0;
 
-        while (_accumulator >= Consts.FIXED_DT && stepCount < Consts.MAX_SUBSTEPS)
+        while (_accumulator >= Config.Instance.FIXED_DT && stepCount < Config.Instance.MAX_SUBSTEPS)
         {
-            _world.Step(Consts.FIXED_DT, ref _solver);
-            _accumulator -= Consts.FIXED_DT;
+            _world.Step(Config.Instance.FIXED_DT, ref _solver);
+            _accumulator -= Config.Instance.FIXED_DT;
             stepCount++;
         }
 
         // if while loop blocked
-        if (_accumulator >= Consts.FIXED_DT)
+        if (_accumulator >= Config.Instance.FIXED_DT)
         {
             _accumulator = 0f;
         }

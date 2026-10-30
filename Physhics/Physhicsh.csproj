@@ -12,10 +12,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="config.toml" />
     <None Remove="fonts\arial.ttf" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="config.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="fonts\arial.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -24,6 +28,7 @@
   <ItemGroup>
     <PackageReference Include="Aether.Physics2D" Version="2.2.0" />
     <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
+    <PackageReference Include="PicoToml" Version="2026.11.0" />
     <PackageReference Include="Raylib-cs" Version="8.1.0" />
     <PackageReference Include="rlImgui-cs" Version="3.2.0" />
   </ItemGroup>

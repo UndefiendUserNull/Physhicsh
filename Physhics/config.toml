@@ -1,0 +1,15 @@
+[Screen]
+ppm = 32.0
+screen_width = 1280
+screen_height = 640
+max_fps = 60
+use_vsync = true
+
+[Physics]
+max_substeps = 3
+fixed_dt = 0.016666668
+max_frame_time = 0.06
+
+[Controls]
+rotation_speed = 5.0
+textures_path = "textures"

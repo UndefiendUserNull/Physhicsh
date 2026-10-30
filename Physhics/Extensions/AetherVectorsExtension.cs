@@ -10,12 +10,12 @@ public static class AetherVectorsExtension
     public static Vector2 ToAetherVector2(this System.Numerics.Vector2 v) => new(v.X, v.Y);
 
     public static Vector2 WorldToScreen(this Vector2 world) => new(
-        Consts.ScreenCenter.X + (world.X * Consts.PPM),
-        Consts.ScreenCenter.Y - (world.Y * Consts.PPM));
+        Config.ScreenCenter.X + (world.X * Config.Instance.PPM),
+        Config.ScreenCenter.Y - (world.Y * Config.Instance.PPM));
 
     public static Vector2 ScreenToWorld(this Vector2 screen) => new(
-        (screen.X - Consts.ScreenCenter.X) / Consts.PPM,
-        (Consts.ScreenCenter.Y - screen.Y) / Consts.PPM);
+        (screen.X - Config.ScreenCenter.X) / Config.Instance.PPM,
+        (Config.ScreenCenter.Y - screen.Y) / Config.Instance.PPM);
 
     public static Vector3 ToVector3(this Color c) =>
         new(c.R / 255f, c.G / 255f, c.B / 255f);

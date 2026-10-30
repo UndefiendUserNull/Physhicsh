@@ -25,7 +25,7 @@ public class CirclePhysicsObject(float x, float y, float radius, Color color, fl
     public override void Draw()
     {
         base.Draw();
-        float screenRadius = Radius * Consts.PPM;
+        float screenRadius = Radius * Config.Instance.PPM;
 
         Raylib.DrawCircleV(Body.Position.WorldToScreen().ToNumericsVector2(), screenRadius, Color);
     }
