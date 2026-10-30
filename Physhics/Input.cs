@@ -160,8 +160,8 @@ public class Input(World world, List<PhysicsObject> objs)
         {
             MouseJoint = new FixedMouseJoint(body, MousePosWorld)
             {
-                MaxForce = 10000f,
-                Frequency = 10.0f,
+                MaxForce = 1000f * body.Mass,
+                Frequency = 5.0f,
             };
 
             world.Add(MouseJoint);

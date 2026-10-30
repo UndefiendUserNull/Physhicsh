@@ -60,7 +60,7 @@ public class MainWindow
         _solver = new()
         {
             VelocityIterations = 8,
-            PositionIterations = 8,
+            PositionIterations = 16,
         };
         SpawnDemoObjects();
 
