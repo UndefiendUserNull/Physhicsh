@@ -1,13 +1,19 @@
 # <sub>![icon](/docs/ico.bmp)</sub> Physhicsh | ڤيچيكش
 
 > [!WARNING]  
-> Under development. Expect crashes.
+> Under development. Expect bugs.
 
-![sc1](/docs/screenshot1.jpg)
-![sc2](/docs/screenshot2.jpg)
-![sc3](/docs/screenshot3.jpg)
+<details>
+<summary>Screenshots</summary>
 
-## <sub>![icon](/docs/ico4.bmp)</sub> Controls
+![sc1](/docs/screenshot4.jpg)
+![sc2](/docs/screenshot6.jpg)
+![sc3](/docs/screenshot5.jpg)
+![sc4](/docs/screenshot4.jpg)
+
+</details>
+  
+# <sub>![icon](/docs/ico4.bmp)</sub> Controls
 
 ### Main:
 
@@ -25,16 +31,16 @@
 
 **V** : Freeze/Unfreeze selected object
 
-**D** : Delete selected object
+**X** : Delete selected object
 
-**E** : Rotate right (unstable)
+**E** : Rotate right
 
-**Q** : Rotate Left (unstable)
+**Q** : Rotate Left
 
-**H** : Increase the selected circle’s radius (requires holding a circle)
+**H** : Increase the selected circle's radius (requires holding a circle)
 
-**J** : Decrease the selected circle’s radius (requires holding a circle)
+**J** : Decrease the selected circle's radius (requires holding a circle)
 
 ### Other:
 
-**F3** : Toggle ugly debug text
+**F3** : Toggle debug window
