@@ -1,9 +1,9 @@
 ﻿using nkast.Aether.Physics2D.Common;
 using nkast.Aether.Physics2D.Dynamics;
 using Physhicsh.PhysicsObjects;
-using Physhicsh.UI;
+using System.Collections.Generic;
 
-namespace Physhicsh
+namespace Physhicsh.UI
 {
     public static class ImGuiStaticPopups
     {

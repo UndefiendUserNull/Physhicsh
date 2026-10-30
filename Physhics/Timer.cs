@@ -1,4 +1,6 @@
-﻿namespace Physhicsh;
+﻿using System;
+
+namespace Physhicsh;
 
 public class Timer(float interval, Action? OnEnd, bool loop = false)
 {

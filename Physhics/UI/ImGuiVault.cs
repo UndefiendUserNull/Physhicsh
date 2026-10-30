@@ -1,4 +1,6 @@
-﻿namespace Physhicsh;
+﻿using System.Collections.Generic;
+
+namespace Physhicsh.UI;
 
 public enum ImGuiWindow
 {
