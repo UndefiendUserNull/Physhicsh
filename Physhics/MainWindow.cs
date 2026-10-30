@@ -2,6 +2,7 @@
 using nkast.Aether.Physics2D.Common;
 using nkast.Aether.Physics2D.Dynamics;
 using Physhicsh.Extensions;
+using Physhicsh.PConfig;
 using Physhicsh.PhysicsObjects;
 using Physhicsh.UI;
 using Raylib_cs;
@@ -37,10 +38,10 @@ public class MainWindow
         _sw = Stopwatch.StartNew();
         _imGuiWindows = [DrawPropertiesWindow, DrawSettingsWindow];
 
-        Raylib.InitWindow(Config.Instance.SCREEN_WIDTH, Config.Instance.SCREEN_HEIGHT, "Physhicsh");
+        Raylib.InitWindow(Config.Instance.Screen.SCREEN_WIDTH, Config.Instance.Screen.SCREEN_HEIGHT, "Physhicsh");
         Raylib.SetConfigFlags(ConfigFlags.VSyncHint);
         Raylib.SetWindowFocused();
-        Raylib.SetTargetFPS(Config.Instance.MAX_FPS);
+        Raylib.SetTargetFPS(Config.Instance.Screen.MAX_FPS);
 
         LoadFont();
 
@@ -302,20 +303,20 @@ public class MainWindow
 
     private void StepPhysics(float frameTime)
     {
-        frameTime = Math.Min(frameTime, Config.Instance.MAX_FRAME_TIME);
+        frameTime = Math.Min(frameTime, Config.Instance.Physics.MAX_FRAME_TIME);
         _accumulator += frameTime;
 
         int stepCount = 0;
 
-        while (_accumulator >= Config.Instance.FIXED_DT && stepCount < Config.Instance.MAX_SUBSTEPS)
+        while (_accumulator >= Config.Instance.Physics.FIXED_DT && stepCount < Config.Instance.Physics.MAX_SUBSTEPS)
         {
-            _world.Step(Config.Instance.FIXED_DT, ref _solver);
-            _accumulator -= Config.Instance.FIXED_DT;
+            _world.Step(Config.Instance.Physics.FIXED_DT, ref _solver);
+            _accumulator -= Config.Instance.Physics.FIXED_DT;
             stepCount++;
         }
 
         // if while loop blocked
-        if (_accumulator >= Config.Instance.FIXED_DT)
+        if (_accumulator >= Config.Instance.Physics.FIXED_DT)
         {
             _accumulator = 0f;
         }

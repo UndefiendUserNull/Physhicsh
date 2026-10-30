@@ -3,6 +3,7 @@ using nkast.Aether.Physics2D.Collision.Shapes;
 using nkast.Aether.Physics2D.Common;
 using nkast.Aether.Physics2D.Dynamics;
 using Physhicsh.Extensions;
+using Physhicsh.PConfig;
 using Physhicsh.UI;
 using Raylib_cs;
 
@@ -90,7 +91,7 @@ namespace Physhicsh.PhysicsObjects
                 maxY = MathF.Max(maxY, v.Y);
             }
 
-            return ((maxX - minX) * Config.Instance.PPM, (maxY - minY) * Config.Instance.PPM);
+            return ((maxX - minX) * Config.Instance.Screen.PPM, (maxY - minY) * Config.Instance.Screen.PPM);
         }
         public override void Properties(ImGuiUI ui)
         {
