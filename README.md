@@ -9,7 +9,7 @@
 ![sc1](/docs/screenshot4.jpg)
 ![sc2](/docs/screenshot6.jpg)
 ![sc3](/docs/screenshot5.jpg)
-![sc4](/docs/screenshot4.jpg)
+![sc4](/docs/screenshot1.jpg)
 
 </details>
   
